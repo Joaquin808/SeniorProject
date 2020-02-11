@@ -8,6 +8,7 @@
 #include "Components/InputComponent.h"
 #include "GameFramework/InputSettings.h"
 #include "Kismet/GameplayStatics.h"
+#include "GameFramework/Character.h"
 
 //////////////////////////////////////////////////////////////////////////
 // AProjectCharacter
@@ -70,15 +71,19 @@ void AProjectCharacter::Ability()
 
 }
 
-void AProjectCharacter::Crouch()
+void AProjectCharacter::DoCrouch()
 {
 	if (bIsCrouched)
 	{
 		UnCrouch();
+		bIsCrouched = false;
+		FirstPersonCameraComponent->SetRelativeLocation(FVector(39.5600014, 1.75, 64.0));
 	}
 	else
 	{
 		Crouch();
+		bIsCrouched = true;
+		FirstPersonCameraComponent->SetRelativeLocation(FVector(39.5600014, 1.75, 32.0));
 	}
 }
 
@@ -95,7 +100,7 @@ void AProjectCharacter::SetupPlayerInputComponent(class UInputComponent* PlayerI
 
 	PlayerInputComponent->BindAction("Ability", IE_Pressed, this, &AProjectCharacter::Ability);
 
-	PlayerInputComponent->BindAction("Crouch", IE_Pressed, this, &AProjectCharacter::Crouch);
+	PlayerInputComponent->BindAction("Crouch", IE_Pressed, this, &AProjectCharacter::DoCrouch);
 
 	PlayerInputComponent->BindAxis("MoveForward", this, &AProjectCharacter::MoveForward);
 	PlayerInputComponent->BindAxis("MoveRight", this, &AProjectCharacter::MoveRight);

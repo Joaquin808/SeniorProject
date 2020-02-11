@@ -53,7 +53,7 @@ protected:
 
 	void Ability();
 
-	void Crouch();
+	void DoCrouch();
 
 	/** Handles moving forward/backward */
 	void MoveForward(float Val);
