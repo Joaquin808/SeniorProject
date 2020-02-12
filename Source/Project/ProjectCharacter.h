@@ -47,6 +47,19 @@ protected:
 	UPROPERTY(EditDefaultsOnly)
 	class UAnimMontage* AttackMontage;
 
+	UPROPERTY(EditDefaultsOnly)
+	int32 TraceDistance;
+
+	UPROPERTY(EditDefaultsOnly)
+	float SphereRadius;
+
+	TArray<class AEnvironmentalObjects*> RenderedObjects;
+
+	FTimerHandle TimerHandle_SonarCooldown;
+
+	UPROPERTY(EditDefaultsOnly)
+	float SonarCooldownRate;
+
 public:
 
 	AProjectCharacter();
@@ -70,6 +83,8 @@ protected:
 	void DoCrouch();
 
 	void Dodge();
+
+	void SonarCooldown();
 
 	UFUNCTION()
 	void OnOverlapBegin(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);

@@ -11,6 +11,11 @@
 #include "GameFramework/Character.h"
 #include "Pickups/Weapons/Sword.h"
 #include "Engine/World.h"
+#include "Environment/EnvironmentalObjects.h"
+#include "Components/StaticMeshComponent.h"
+#include "DrawDebugHelpers.h"
+#include "TimerManager.h"
+#include "GameFramework/CharacterMovementComponent.h"
 
 //////////////////////////////////////////////////////////////////////////
 // AProjectCharacter
@@ -66,14 +71,53 @@ void AProjectCharacter::Attack()
 		}
 
 		PlayAnimMontage(AttackMontage);
-		//Mesh1P->PlayAnimation(AttackMontage, false);
 		UE_LOG(LogTemp, Log, TEXT("Attack"));
 	}
 }
 
 void AProjectCharacter::Ability()
 {
+	if (GetWorldTimerManager().IsTimerActive(TimerHandle_SonarCooldown))
+	{
+		UE_LOG(LogTemp, Log, TEXT("Timer is still active"));
+		return;
+	}
 
+	GetWorldTimerManager().SetTimer(TimerHandle_SonarCooldown, this, &AProjectCharacter::SonarCooldown, 0.01, false, SonarCooldownRate);
+
+	TArray<FHitResult> HitResults;
+
+	FVector Start = GetActorLocation();
+	FVector End = Start + (GetActorForwardVector() * TraceDistance);
+
+	FQuat Quat;
+
+	FCollisionShape Sphere = FCollisionShape::MakeSphere(SphereRadius);
+	//Sphere.ShapeType = ECollisionShape::Sphere;
+	//Sphere.MakeSphere(SphereRadius);
+
+	FCollisionObjectQueryParams ObjectParams;
+	//ObjectParams.AllDynamicObjects;
+
+	FCollisionQueryParams QueryParams;
+	QueryParams.AddIgnoredActor(this);
+
+	DrawDebugSphere(GetWorld(), End, SphereRadius, 100, FColor::Red, false, 1.0f);
+	if (GetWorld()->SweepMultiByChannel(HitResults, Start, End, FQuat::Identity, ECC_WorldDynamic, Sphere, QueryParams))
+	{
+		UE_LOG(LogTemp, Log, TEXT("Hit something"));
+		for (int32 i = 0; i < HitResults.Num(); i++)
+		{
+			auto Object = Cast<AEnvironmentalObjects>(HitResults[i].GetActor());
+			if (Object)
+			{
+				Object->StaticMesh->SetRenderCustomDepth(true);
+				Object->StaticMesh->SetCustomDepthStencilValue(2);
+				RenderedObjects.Add(Object);
+				UE_LOG(LogTemp, Log, TEXT("Hit an object"));
+			}
+		}
+	}
 }
 
 void AProjectCharacter::DoCrouch()
@@ -82,19 +126,32 @@ void AProjectCharacter::DoCrouch()
 	{
 		UnCrouch();
 		bIsCrouched = false;
-		FirstPersonCameraComponent->SetRelativeLocation(FVector(39.5600014, 1.75, 64.0));
+		//FirstPersonCameraComponent->SetRelativeLocation(FVector(39.5600014, 1.75, 64.0));
 	}
 	else
 	{
 		Crouch();
 		bIsCrouched = true;
-		FirstPersonCameraComponent->SetRelativeLocation(FVector(39.5600014, 1.75, 32.0));
+		//FirstPersonCameraComponent->SetRelativeLocation(FVector(39.5600014, 1.75, 32.0));
 	}
 }
 
 void AProjectCharacter::Dodge()
 {
 	
+}
+
+void AProjectCharacter::SonarCooldown()
+{
+	GetWorldTimerManager().ClearTimer(TimerHandle_SonarCooldown);
+
+	for (auto Object : RenderedObjects)
+	{
+		Object->StaticMesh->SetRenderCustomDepth(false);
+		Object->StaticMesh->SetCustomDepthStencilValue(0);
+	}
+
+	RenderedObjects.Empty();
 }
 
 void AProjectCharacter::OnOverlapBegin(UPrimitiveComponent * OverlappedComp, AActor * OtherActor, UPrimitiveComponent * OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult & SweepResult)
