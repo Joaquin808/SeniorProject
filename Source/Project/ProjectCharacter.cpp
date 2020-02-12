@@ -9,6 +9,8 @@
 #include "GameFramework/InputSettings.h"
 #include "Kismet/GameplayStatics.h"
 #include "GameFramework/Character.h"
+#include "Pickups/Weapons/Sword.h"
+#include "Engine/World.h"
 
 //////////////////////////////////////////////////////////////////////////
 // AProjectCharacter
@@ -18,22 +20,28 @@ AProjectCharacter::AProjectCharacter()
 	// Set size for collision capsule
 	GetCapsuleComponent()->InitCapsuleSize(55.f, 96.0f);
 
+	Collider = CreateDefaultSubobject<UCapsuleComponent>(TEXT("Collider"));
+	Collider->OnComponentBeginOverlap.AddDynamic(this, &AProjectCharacter::OnOverlapBegin);
+	Collider->OnComponentEndOverlap.AddDynamic(this, &AProjectCharacter::OnOverlapEnd);
+	Collider->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Overlap);
+	Collider->SetupAttachment(RootComponent);
+
 	// set our turn rates for input
 	BaseTurnRate = 45.f;
 	BaseLookUpRate = 45.f;
 
 	// Create a CameraComponent	
 	FirstPersonCameraComponent = CreateDefaultSubobject<UCameraComponent>(TEXT("FirstPersonCamera"));
-	FirstPersonCameraComponent->SetupAttachment(GetCapsuleComponent());
+	FirstPersonCameraComponent->SetupAttachment(GetMesh());
 	FirstPersonCameraComponent->RelativeLocation = FVector(-39.56f, 1.75f, 64.f); // Position the camera
 	FirstPersonCameraComponent->bUsePawnControlRotation = true;
 
 	// Create a mesh component that will be used when being viewed from a '1st person' view (when controlling this pawn)
-	Mesh1P = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("CharacterMesh1P"));
+	/**Mesh1P = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("CharacterMesh1P"));
 	Mesh1P->SetOnlyOwnerSee(true);
 	Mesh1P->SetupAttachment(FirstPersonCameraComponent);
 	Mesh1P->bCastDynamicShadow = false;
-	Mesh1P->CastShadow = false;
+	Mesh1P->CastShadow = false;**/
 
 }
 
@@ -46,7 +54,21 @@ void AProjectCharacter::BeginPlay()
 
 void AProjectCharacter::Attack()
 {
+	if (Weapon)
+	{
+		if (Stance == EStance::Combat)
+		{
+			
+		}
+		else
+		{
+			Stance = EStance::Combat;
+		}
 
+		PlayAnimMontage(AttackMontage);
+		//Mesh1P->PlayAnimation(AttackMontage, false);
+		UE_LOG(LogTemp, Log, TEXT("Attack"));
+	}
 }
 
 void AProjectCharacter::Ability()
@@ -73,6 +95,39 @@ void AProjectCharacter::DoCrouch()
 void AProjectCharacter::Dodge()
 {
 	
+}
+
+void AProjectCharacter::OnOverlapBegin(UPrimitiveComponent * OverlappedComp, AActor * OtherActor, UPrimitiveComponent * OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult & SweepResult)
+{
+	auto Sword = Cast<ASword>(OtherActor);
+	if (Sword)
+	{
+		UE_LOG(LogTemp, Log, TEXT("Overlapped sword"));
+		if (Weapon)
+		{
+			UE_LOG(LogTemp, Log, TEXT("Return"));
+			return;
+		}
+
+		FActorSpawnParameters SpawnParams;
+		SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+		Weapon = GetWorld()->SpawnActor<ASword>(WeaponClass, FVector(-10.0f, 20.0f, 10.0f), FRotator(0.0f, 0.0f, -90.0f), SpawnParams);
+
+		if (Weapon)
+		{
+			Weapon->SetActorEnableCollision(false);
+			FString AttachmentSocket = "Socket_Weapon";
+			FName SocketName = FName(*AttachmentSocket);
+			Weapon->AttachToComponent(GetMesh(), FAttachmentTransformRules::SnapToTargetIncludingScale, SocketName);
+			Stance = EStance::Armed;
+			UE_LOG(LogTemp, Log, TEXT("Spawned weapon"));
+		}
+	}
+}
+
+void AProjectCharacter::OnOverlapEnd(UPrimitiveComponent * OverlappedComp, AActor * OtherActor, UPrimitiveComponent * OtherComp, int32 OtherBodyIndex)
+{
+
 }
 
 void AProjectCharacter::SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent)

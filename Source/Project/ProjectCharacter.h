@@ -6,6 +6,14 @@
 #include "GameFramework/Character.h"
 #include "ProjectCharacter.generated.h"
 
+UENUM(BlueprintType)
+enum class EStance : uint8
+{
+	Unarmed,
+	Armed,
+	Combat
+};
+
 class UInputComponent;
 
 UCLASS(config=Game)
@@ -23,7 +31,21 @@ protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
 	class UCameraComponent* FirstPersonCameraComponent;
 
+	UPROPERTY(VisibleAnywhere)
+	class UCapsuleComponent* Collider;
+
 	bool bIsCrouched;
+
+	class ASword* Weapon;
+
+	UPROPERTY(EditDefaultsOnly)
+	TSubclassOf<class ASword> WeaponClass;
+
+	UPROPERTY(BlueprintReadOnly)
+	EStance Stance;
+
+	UPROPERTY(EditDefaultsOnly)
+	class UAnimMontage* AttackMontage;
 
 public:
 
@@ -48,6 +70,12 @@ protected:
 	void DoCrouch();
 
 	void Dodge();
+
+	UFUNCTION()
+	void OnOverlapBegin(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
+
+	UFUNCTION()
+	void OnOverlapEnd(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex);
 
 	/** Handles moving forward/backward */
 	void MoveForward(float Val);
