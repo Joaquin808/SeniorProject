@@ -18,10 +18,25 @@ protected:
 
 	FVector PatrolStartLocation;
 
+	FVector AILocation;
+
+	FVector PlayerLocation;
+
 	UPROPERTY(EditDefaultsOnly)
+	float NonDetectedPatrolRadius;
+
+	UPROPERTY(EditDefaultsOnly)
+	float DetectedPatrolRadius;
+
 	float PatrolRadius;
 
 	bool bIsPatroling;
+
+	bool bSawPlayer;
+
+	bool bLostPlayer;
+
+	FTimerHandle TimerHandle_NotMoving;
 
 public:
 	// Sets default values for this character's properties
@@ -34,6 +49,10 @@ protected:
 	void Patrol();
 
 	void PatrolTimerEnd();
+
+	void CheckNotMoving();
+
+	void CheckLocation();
 
 public:	
 	// Called every frame
