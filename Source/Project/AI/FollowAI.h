@@ -38,6 +38,18 @@ protected:
 
 	FTimerHandle TimerHandle_NotMoving;
 
+	UPROPERTY(EditDefaultsOnly)
+	float ChaseWalkSpeed;
+
+	UPROPERTY(EditDefaultsOnly)
+	float PatrolWalkSpeed;
+
+	// how close to the player the AI needs to be in order to display it's footsteps
+	UPROPERTY(EditDefaultsOnly)
+	float ShowFootstepsDistance;
+
+	TArray<class AEnvironmentalObjects*> FootstepsArray;
+
 public:
 	// Sets default values for this character's properties
 	AFollowAI();
@@ -53,6 +65,8 @@ protected:
 	void CheckNotMoving();
 
 	void CheckLocation();
+
+	void ShowFootsteps();
 
 public:	
 	// Called every frame

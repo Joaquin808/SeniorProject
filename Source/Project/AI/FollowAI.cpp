@@ -6,6 +6,9 @@
 #include "TimerManager.h"
 #include "ProjectCharacter.h"
 #include "GameFramework/CharacterMovementComponent.h"
+#include "Kismet/GameplayStatics.h"
+#include "Environment/EnvironmentalObjects.h"
+#include "Components/StaticMeshComponent.h"
 
 // Sets default values
 AFollowAI::AFollowAI()
@@ -17,8 +20,6 @@ AFollowAI::AFollowAI()
 	PawnSensingComp->OnSeePawn.AddDynamic(this, &AFollowAI::OnPawnSeen);
 	PawnSensingComp->OnHearNoise.AddDynamic(this, &AFollowAI::OnHearPawn);
 
-	// the AI speed needs to be slower than the player, so they have the ability to actually run away
-	GetCharacterMovement()->MaxWalkSpeed = 450.0f;
 }
 
 // Called when the game starts or when spawned
@@ -33,6 +34,10 @@ void AFollowAI::BeginPlay()
 	// from the start, will check to see if the AI has stopped moving
 	FTimerHandle TimerHandle_CheckNotMoving;
 	GetWorldTimerManager().SetTimer(TimerHandle_CheckNotMoving, this, &AFollowAI::CheckNotMoving, 1.0f, true);
+
+	// starts a timer to check to see how close the AI is to the player every second
+	FTimerHandle TimerHandle_ShowFootsteps;
+	GetWorldTimerManager().SetTimer(TimerHandle_ShowFootsteps, this, &AFollowAI::ShowFootsteps, 1.0f, true);
 }
 
 void AFollowAI::Patrol()
@@ -51,6 +56,8 @@ void AFollowAI::Patrol()
 		break;
 	}
 
+	// want the AI to patrol very slowly rather than sprinting around
+	GetCharacterMovement()->MaxWalkSpeed = PatrolWalkSpeed;
 	UAIBlueprintHelperLibrary::SimpleMoveToLocation(GetController(), UNavigationSystemV1::GetRandomReachablePointInRadius(this, PatrolStartLocation, PatrolRadius));
 	if (bIsPatroling)
 	{
@@ -104,6 +111,36 @@ void AFollowAI::CheckLocation()
 	}
 }
 
+void AFollowAI::ShowFootsteps()
+{
+	// if the AI is within a certain distance of the player, then turn on the outline of the footsteps, so the player has an idea of where the AI is
+	auto Player = Cast<AProjectCharacter>(UGameplayStatics::GetPlayerCharacter(this, 0));
+	if (FVector::Dist(GetActorLocation(), Player->GetActorLocation()) <= ShowFootstepsDistance)
+	{
+		TArray<AActor*> AttachedActors;
+		GetAttachedActors(AttachedActors);
+		for (auto Actor : AttachedActors)
+		{
+			auto Footsteps = Cast<AEnvironmentalObjects>(Actor);
+			if (Footsteps)
+			{
+				Footsteps->StaticMesh->SetRenderCustomDepth(true);
+				Footsteps->StaticMesh->SetCustomDepthStencilValue(2);
+				FootstepsArray.AddUnique(Footsteps);
+			}
+		}
+	}
+	else
+	{
+		for (auto Footsteps : FootstepsArray)
+		{
+			Footsteps->StaticMesh->SetRenderCustomDepth(false);
+			Footsteps->StaticMesh->SetCustomDepthStencilValue(0);
+		}
+	}
+
+}
+
 void AFollowAI::OnPawnSeen(APawn* OtherActor)
 {
 	UE_LOG(LogTemp, Log, TEXT("OnPawnSeen"));
@@ -116,6 +153,8 @@ void AFollowAI::OnPawnSeen(APawn* OtherActor)
 		bSawPlayer = true;
 		bLostPlayer = false;
 		PlayerLocation = Player->GetActorLocation();
+		// the AI speed needs to be slower than the player, so they have the ability to actually run away
+		GetCharacterMovement()->MaxWalkSpeed = ChaseWalkSpeed;
 		UAIBlueprintHelperLibrary::SimpleMoveToLocation(GetController(), PlayerLocation);
 	}
 }
