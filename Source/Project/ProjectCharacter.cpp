@@ -16,6 +16,7 @@
 #include "DrawDebugHelpers.h"
 #include "TimerManager.h"
 #include "GameFramework/CharacterMovementComponent.h"
+#include "Components/PawnNoiseEmitterComponent.h"
 
 //////////////////////////////////////////////////////////////////////////
 // AProjectCharacter
@@ -40,6 +41,8 @@ AProjectCharacter::AProjectCharacter()
 	FirstPersonCameraComponent->SetupAttachment(GetMesh());
 	FirstPersonCameraComponent->RelativeLocation = FVector(-39.56f, 1.75f, 64.f); // Position the camera
 	FirstPersonCameraComponent->bUsePawnControlRotation = true;
+
+	NoiseEmitterComp = CreateDefaultSubobject<UPawnNoiseEmitterComponent>(TEXT("NoiseEmitterComp"));
 
 	// Create a mesh component that will be used when being viewed from a '1st person' view (when controlling this pawn)
 	/**Mesh1P = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("CharacterMesh1P"));
@@ -217,6 +220,7 @@ void AProjectCharacter::MoveForward(float Value)
 	{
 		// add movement in that direction
 		AddMovementInput(GetActorForwardVector(), Value);
+		MakeNoise(1.0f, this, GetActorLocation(), 1000.0f);
 	}
 }
 
@@ -226,5 +230,6 @@ void AProjectCharacter::MoveRight(float Value)
 	{
 		// add movement in that direction
 		AddMovementInput(GetActorRightVector(), Value);
+		MakeNoise(1.0f, this, GetActorLocation(), 1000.0f);
 	}
 }

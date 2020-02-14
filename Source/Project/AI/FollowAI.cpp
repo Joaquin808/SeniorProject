@@ -138,7 +138,6 @@ void AFollowAI::ShowFootsteps()
 			Footsteps->StaticMesh->SetCustomDepthStencilValue(0);
 		}
 	}
-
 }
 
 void AFollowAI::OnPawnSeen(APawn* OtherActor)
@@ -161,7 +160,17 @@ void AFollowAI::OnPawnSeen(APawn* OtherActor)
 
 void AFollowAI::OnHearPawn(APawn* OtherActor, const FVector& Location, float Volume)
 {
+	UE_LOG(LogTemp, Log, TEXT("Heard something"));
+	bIsPatroling = false;
 
+	FVector LookAtLocation = Location - GetActorLocation();
+	LookAtLocation.Normalize();
+
+	FRotator NewLookAt = FRotationMatrix::MakeFromX(LookAtLocation).Rotator();
+	NewLookAt.Pitch = 0.0f;
+	NewLookAt.Roll = 0.0f;
+
+	SetActorRotation(NewLookAt);
 }
 
 // Called every frame
@@ -170,11 +179,3 @@ void AFollowAI::Tick(float DeltaTime)
 	Super::Tick(DeltaTime);
 
 }
-
-// Called to bind functionality to input
-void AFollowAI::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
-{
-	Super::SetupPlayerInputComponent(PlayerInputComponent);
-
-}
-

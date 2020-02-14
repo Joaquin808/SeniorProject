@@ -78,7 +78,4 @@ public:
 	UFUNCTION()
 	void OnHearPawn(APawn* OtherActor, const FVector& Location, float Volume);
 
-	// Called to bind functionality to input
-	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
-
 };

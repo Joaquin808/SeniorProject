@@ -24,15 +24,17 @@ class AProjectCharacter : public ACharacter
 protected:
 
 	/** Pawn mesh: 1st person view (arms; seen only by self) */
-	UPROPERTY(VisibleDefaultsOnly, Category=Mesh)
-	class USkeletalMeshComponent* Mesh1P;
+	//UPROPERTY(VisibleDefaultsOnly, Category=Mesh)
+	//class USkeletalMeshComponent* Mesh1P;
 
-	/** First person camera */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
 	class UCameraComponent* FirstPersonCameraComponent;
 
 	UPROPERTY(VisibleAnywhere)
 	class UCapsuleComponent* Collider;
+
+	UPROPERTY(VisibleAnywhere)
+	class UPawnNoiseEmitterComponent* NoiseEmitterComp;
 
 	bool bIsCrouched;
 
@@ -103,7 +105,7 @@ protected:
 public:
 
 	/** Returns Mesh1P subobject **/
-	FORCEINLINE class USkeletalMeshComponent* GetMesh1P() const { return Mesh1P; }
+	//FORCEINLINE class USkeletalMeshComponent* GetMesh1P() const { return Mesh1P; }
 
 	/** Returns FirstPersonCameraComponent subobject **/
 	FORCEINLINE class UCameraComponent* GetFirstPersonCameraComponent() const { return FirstPersonCameraComponent; }
