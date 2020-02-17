@@ -62,6 +62,14 @@ protected:
 	UPROPERTY(EditDefaultsOnly)
 	float SonarCooldownRate;
 
+	UPROPERTY(EditDefaultsOnly)
+	TSubclassOf<class AAbilityLight> LightClass;
+
+	class AAbilityLight* Light;
+
+	UPROPERTY(EditDefaultsOnly)
+	float LightHeight;
+
 public:
 
 	AProjectCharacter();

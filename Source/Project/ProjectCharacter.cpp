@@ -17,6 +17,7 @@
 #include "TimerManager.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Components/PawnNoiseEmitterComponent.h"
+#include "Actors/AbilityLight.h"
 
 //////////////////////////////////////////////////////////////////////////
 // AProjectCharacter
@@ -57,6 +58,11 @@ void AProjectCharacter::BeginPlay()
 {
 	// Call the base class  
 	Super::BeginPlay();
+
+	FActorSpawnParameters SpawnParams;
+	SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+	Light = GetWorld()->SpawnActor<AAbilityLight>(LightClass, GetActorLocation() + FVector(0, 0, LightHeight), FRotator::ZeroRotator, SpawnParams);
+	Light->AttachToComponent(GetMesh(), FAttachmentTransformRules::SnapToTargetIncludingScale);
 
 }
 
@@ -159,7 +165,15 @@ void AProjectCharacter::SonarCooldown()
 
 void AProjectCharacter::OnOverlapBegin(UPrimitiveComponent * OverlappedComp, AActor * OtherActor, UPrimitiveComponent * OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult & SweepResult)
 {
-	auto Sword = Cast<ASword>(OtherActor);
+	// if I run into an enironment object, outline it to let the player know that they hit something since they can't see
+	auto Object = Cast<AEnvironmentalObjects>(OtherActor);
+	if (Object)
+	{
+		Object->StaticMesh->SetRenderCustomDepth(true);
+		Object->StaticMesh->SetCustomDepthStencilValue(2);
+	}
+
+	/**auto Sword = Cast<ASword>(OtherActor);
 	if (Sword)
 	{
 		UE_LOG(LogTemp, Log, TEXT("Overlapped sword"));
@@ -182,12 +196,17 @@ void AProjectCharacter::OnOverlapBegin(UPrimitiveComponent * OverlappedComp, AAc
 			Stance = EStance::Armed;
 			UE_LOG(LogTemp, Log, TEXT("Spawned weapon"));
 		}
-	}
+	}**/
 }
 
 void AProjectCharacter::OnOverlapEnd(UPrimitiveComponent * OverlappedComp, AActor * OtherActor, UPrimitiveComponent * OtherComp, int32 OtherBodyIndex)
 {
-
+	auto Object = Cast<AEnvironmentalObjects>(OtherActor);
+	if (Object)
+	{
+		Object->StaticMesh->SetRenderCustomDepth(false);
+		Object->StaticMesh->SetCustomDepthStencilValue(0);
+	}
 }
 
 void AProjectCharacter::SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent)
