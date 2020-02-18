@@ -61,8 +61,9 @@ void AProjectCharacter::BeginPlay()
 
 	FActorSpawnParameters SpawnParams;
 	SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
-	Light = GetWorld()->SpawnActor<AAbilityLight>(LightClass, GetActorLocation() + FVector(0, 0, LightHeight), FRotator::ZeroRotator, SpawnParams);
+	Light = GetWorld()->SpawnActor<AAbilityLight>(LightClass, SpawnParams);
 	Light->AttachToComponent(GetMesh(), FAttachmentTransformRules::SnapToTargetIncludingScale);
+	Light->SetActorLocation(GetActorLocation() + FVector(0, 0, LightHeight));
 
 }
 
