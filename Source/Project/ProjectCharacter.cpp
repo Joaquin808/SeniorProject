@@ -112,21 +112,31 @@ void AProjectCharacter::Ability()
 	FCollisionQueryParams QueryParams;
 	QueryParams.AddIgnoredActor(this);
 
-	DrawDebugSphere(GetWorld(), End, SphereRadius, 100, FColor::Red, false, 1.0f);
-	if (GetWorld()->SweepMultiByChannel(HitResults, Start, End, FQuat::Identity, ECC_WorldDynamic, Sphere, QueryParams))
+	if (bOutlineObjects)
 	{
-		UE_LOG(LogTemp, Log, TEXT("Hit something"));
-		for (int32 i = 0; i < HitResults.Num(); i++)
+		DrawDebugSphere(GetWorld(), End, SphereRadius, 100, FColor::Red, false, 1.0f);
+		if (GetWorld()->SweepMultiByChannel(HitResults, Start, End, FQuat::Identity, ECC_WorldDynamic, Sphere, QueryParams))
 		{
-			auto Object = Cast<AEnvironmentalObjects>(HitResults[i].GetActor());
-			if (Object)
+			UE_LOG(LogTemp, Log, TEXT("Hit something"));
+			for (int32 i = 0; i < HitResults.Num(); i++)
 			{
-				Object->StaticMesh->SetRenderCustomDepth(true);
-				Object->StaticMesh->SetCustomDepthStencilValue(2);
-				RenderedObjects.Add(Object);
-				UE_LOG(LogTemp, Log, TEXT("Hit an object"));
+				auto Object = Cast<AEnvironmentalObjects>(HitResults[i].GetActor());
+				if (Object)
+				{
+					Object->StaticMesh->SetRenderCustomDepth(true);
+					Object->StaticMesh->SetCustomDepthStencilValue(2);
+					RenderedObjects.Add(Object);
+					UE_LOG(LogTemp, Log, TEXT("Hit an object"));
+				}
 			}
 		}
+	}
+
+	if (bUseLight)
+	{
+		FActorSpawnParameters SpawnParams;
+		SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+		AbilityLight = GetWorld()->SpawnActor<AAbilityLight>(AbilityLightClass, GetActorLocation() + FVector(0, 0, AbilityLightHeight), FRotator::ZeroRotator, SpawnParams);
 	}
 }
 
@@ -162,6 +172,11 @@ void AProjectCharacter::SonarCooldown()
 	}
 
 	RenderedObjects.Empty();
+
+	if (AbilityLight)
+	{
+		AbilityLight->Destroy();
+	}
 }
 
 void AProjectCharacter::OnOverlapBegin(UPrimitiveComponent * OverlappedComp, AActor * OtherActor, UPrimitiveComponent * OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult & SweepResult)

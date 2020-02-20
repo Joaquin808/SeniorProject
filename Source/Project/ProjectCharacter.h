@@ -70,6 +70,20 @@ protected:
 	UPROPERTY(EditDefaultsOnly)
 	float LightHeight;
 
+	UPROPERTY(EditDefaultsOnly)
+	float AbilityLightHeight;
+
+	UPROPERTY(EditDefaultsOnly)
+	TSubclassOf<class AAbilityLight> AbilityLightClass;
+
+	class AAbilityLight* AbilityLight;
+
+	UPROPERTY(EditDefaultsOnly)
+	bool bOutlineObjects;
+
+	UPROPERTY(EditDefaultsOnly)
+	bool bUseLight;
+
 public:
 
 	AProjectCharacter();
