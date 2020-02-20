@@ -65,6 +65,8 @@ void AProjectCharacter::BeginPlay()
 	Light->AttachToComponent(GetMesh(), FAttachmentTransformRules::SnapToTargetIncludingScale);
 	Light->SetActorLocation(GetActorLocation() + FVector(0, 0, LightHeight));
 
+	Health = MaxHealth;
+
 }
 
 void AProjectCharacter::Attack()
@@ -82,6 +84,32 @@ void AProjectCharacter::Attack()
 
 		PlayAnimMontage(AttackMontage);
 		UE_LOG(LogTemp, Log, TEXT("Attack"));
+	}
+}
+
+void AProjectCharacter::Block()
+{
+	if (Weapon)
+	{
+		bIsBlocking = true;
+		PlayAnimMontage(BlockingMontage);
+	}
+}
+
+void AProjectCharacter::UnBlock()
+{
+	bIsBlocking = false;
+}
+
+void AProjectCharacter::Damage(float Damage)
+{
+	if (bIsBlocking)
+	{
+		PlayAnimMontage(BlockingHitMontage);
+	}
+	else
+	{
+		Health = Health - Damage;
 	}
 }
 
@@ -235,6 +263,9 @@ void AProjectCharacter::SetupPlayerInputComponent(class UInputComponent* PlayerI
 	PlayerInputComponent->BindAction("Jump", IE_Released, this, &ACharacter::StopJumping);
 
 	PlayerInputComponent->BindAction("Attack", IE_Pressed, this, &AProjectCharacter::Attack);
+
+	PlayerInputComponent->BindAction("Block", IE_Pressed, this, &AProjectCharacter::Block);
+	PlayerInputComponent->BindAction("Block", IE_Released, this, &AProjectCharacter::UnBlock);
 
 	PlayerInputComponent->BindAction("Ability", IE_Pressed, this, &AProjectCharacter::Ability);
 

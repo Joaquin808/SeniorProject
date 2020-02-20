@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
+#include "Interfaces/CombatInterface.h"
 #include "ProjectCharacter.generated.h"
 
 UENUM(BlueprintType)
@@ -17,7 +18,7 @@ enum class EStance : uint8
 class UInputComponent;
 
 UCLASS(config=Game)
-class AProjectCharacter : public ACharacter
+class AProjectCharacter : public ACharacter, ICombatInterface
 {
 	GENERATED_BODY()
 
@@ -84,6 +85,20 @@ protected:
 	UPROPERTY(EditDefaultsOnly)
 	bool bUseLight;
 
+	UPROPERTY(BlueprintReadOnly)
+	bool bIsBlocking;
+
+	UPROPERTY(EditDefaultsOnly)
+	UAnimMontage* BlockingMontage;
+
+	float Health;
+
+	UPROPERTY(EditDefaultsOnly)
+	float MaxHealth;
+
+	UPROPERTY(EditDefaultsOnly)
+	UAnimMontage* BlockingHitMontage;
+
 public:
 
 	AProjectCharacter();
@@ -101,6 +116,10 @@ protected:
 	virtual void BeginPlay();
 	
 	void Attack();
+
+	void Block();
+
+	void UnBlock();
 
 	void Ability();
 
@@ -125,6 +144,8 @@ protected:
 	virtual void SetupPlayerInputComponent(UInputComponent* InputComponent) override;
 
 public:
+
+	virtual void Damage(float Damage) override;
 
 	/** Returns Mesh1P subobject **/
 	//FORCEINLINE class USkeletalMeshComponent* GetMesh1P() const { return Mesh1P; }

@@ -27,6 +27,8 @@ void ABossAI::BeginPlay()
 		FName SocketName = FName(*AttachmentSocket);
 		Weapon->AttachToComponent(GetMesh(), FAttachmentTransformRules::SnapToTargetIncludingScale, SocketName);
 	}
+
+	Health = MaxHealth;
 }
 
 // Called every frame
@@ -34,4 +36,16 @@ void ABossAI::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
+}
+
+void ABossAI::Damage(float Damage)
+{
+	if (bIsBlocking)
+	{
+		PlayAnimMontage(BlockingHitMontage);
+	}
+	else
+	{
+		Health = Health - Damage;
+	}
 }
