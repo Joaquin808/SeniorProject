@@ -8,7 +8,7 @@
 #include "BossAI.generated.h"
 
 UCLASS()
-class PROJECT_API ABossAI : public ACharacter, ICombatInterface
+class PROJECT_API ABossAI : public ACharacter, public ICombatInterface
 {
 	GENERATED_BODY()
 
@@ -38,6 +38,14 @@ protected:
 	UPROPERTY(EditDefaultsOnly)
 	float MaxHealth;
 
+	class AProjectCharacter* PlayerReference;
+
+	float DistanceToPlayerThreshold;
+
+	bool bIsAttacking;
+
+	bool bBlockedHit;
+
 public:
 	// Sets default values for this character's properties
 	ABossAI();
@@ -45,6 +53,20 @@ public:
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
+
+	void ApproachPlayer();
+
+	void Attack();
+
+	void Block();
+
+	void UnBlock();
+
+	void Roll();
+
+	void CombatChoice();
+
+	void CheckDistanceToPlayer();
 
 public:	
 	// Called every frame

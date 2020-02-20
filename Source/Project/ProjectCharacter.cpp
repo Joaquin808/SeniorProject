@@ -59,11 +59,14 @@ void AProjectCharacter::BeginPlay()
 	// Call the base class  
 	Super::BeginPlay();
 
-	FActorSpawnParameters SpawnParams;
-	SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
-	Light = GetWorld()->SpawnActor<AAbilityLight>(LightClass, SpawnParams);
-	Light->AttachToComponent(GetMesh(), FAttachmentTransformRules::SnapToTargetIncludingScale);
-	Light->SetActorLocation(GetActorLocation() + FVector(0, 0, LightHeight));
+	if (bUseLight)
+	{
+		FActorSpawnParameters SpawnParams;
+		SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+		Light = GetWorld()->SpawnActor<AAbilityLight>(LightClass, SpawnParams);
+		Light->AttachToComponent(GetMesh(), FAttachmentTransformRules::SnapToTargetIncludingScale);
+		Light->SetActorLocation(GetActorLocation() + FVector(0, 0, LightHeight));
+	}
 
 	Health = MaxHealth;
 
@@ -73,6 +76,8 @@ void AProjectCharacter::Attack()
 {
 	if (Weapon)
 	{
+		bIsAttacking = true;
+
 		if (Stance == EStance::Combat)
 		{
 			
@@ -99,6 +104,7 @@ void AProjectCharacter::Block()
 void AProjectCharacter::UnBlock()
 {
 	bIsBlocking = false;
+	StopAnimMontage(BlockingMontage);
 }
 
 void AProjectCharacter::Damage(float Damage)
@@ -217,7 +223,7 @@ void AProjectCharacter::OnOverlapBegin(UPrimitiveComponent * OverlappedComp, AAc
 		Object->StaticMesh->SetCustomDepthStencilValue(2);
 	}
 
-	/**auto Sword = Cast<ASword>(OtherActor);
+	auto Sword = Cast<ASword>(OtherActor);
 	if (Sword)
 	{
 		UE_LOG(LogTemp, Log, TEXT("Overlapped sword"));
@@ -240,7 +246,7 @@ void AProjectCharacter::OnOverlapBegin(UPrimitiveComponent * OverlappedComp, AAc
 			Stance = EStance::Armed;
 			UE_LOG(LogTemp, Log, TEXT("Spawned weapon"));
 		}
-	}**/
+	}
 }
 
 void AProjectCharacter::OnOverlapEnd(UPrimitiveComponent * OverlappedComp, AActor * OtherActor, UPrimitiveComponent * OtherComp, int32 OtherBodyIndex)

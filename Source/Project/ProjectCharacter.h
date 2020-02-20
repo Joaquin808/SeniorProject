@@ -18,7 +18,7 @@ enum class EStance : uint8
 class UInputComponent;
 
 UCLASS(config=Game)
-class AProjectCharacter : public ACharacter, ICombatInterface
+class AProjectCharacter : public ACharacter, public ICombatInterface
 {
 	GENERATED_BODY()
 
@@ -85,13 +85,8 @@ protected:
 	UPROPERTY(EditDefaultsOnly)
 	bool bUseLight;
 
-	UPROPERTY(BlueprintReadOnly)
-	bool bIsBlocking;
-
 	UPROPERTY(EditDefaultsOnly)
 	UAnimMontage* BlockingMontage;
-
-	float Health;
 
 	UPROPERTY(EditDefaultsOnly)
 	float MaxHealth;
@@ -110,6 +105,14 @@ public:
 	/** Base look up/down rate, in deg/sec. Other scaling may affect final rate. */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera)
 	float BaseLookUpRate;
+
+	// I want these public so the AI can use them
+	UPROPERTY(BlueprintReadOnly)
+	bool bIsBlocking;
+
+	float Health;
+
+	bool bIsAttacking;
 
 protected:
 

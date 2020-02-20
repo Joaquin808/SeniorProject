@@ -2,6 +2,10 @@
 #include "BossAI.h"
 #include "Engine/Engine.h"
 #include "Pickups/Weapons/Sword.h"
+#include "Kismet/GameplayStatics.h"
+#include "ProjectCharacter.h"
+#include "NavigationSystem.h"
+#include "TimerManager.h"
 
 // Sets default values
 ABossAI::ABossAI()
@@ -29,6 +33,67 @@ void ABossAI::BeginPlay()
 	}
 
 	Health = MaxHealth;
+
+	PlayerReference = Cast<AProjectCharacter>(UGameplayStatics::GetPlayerCharacter(this, 0));
+	ApproachPlayer();
+
+	FTimerHandle TimerHandle_CheckDistanceToPlayer;
+	GetWorldTimerManager().SetTimer(TimerHandle_CheckDistanceToPlayer, this, &ABossAI::CheckDistanceToPlayer, 1.0f, true);
+}
+
+void ABossAI::ApproachPlayer()
+{
+	UNavigationSystemV1::SimpleMoveToActor(GetController(), PlayerReference);
+}
+
+void ABossAI::Attack()
+{
+	bIsAttacking = true;
+	PlayAnimMontage(AttackMontage);
+}
+
+void ABossAI::Block()
+{
+	bIsBlocking = true;
+	PlayAnimMontage(BlockingMontage);
+}
+
+void ABossAI::UnBlock()
+{
+	bIsBlocking = false;
+}
+
+void ABossAI::Roll()
+{
+
+}
+
+void ABossAI::CombatChoice()
+{
+	if (PlayerReference->bIsAttacking)
+	{
+		bool bLocal = FMath::RandBool();
+		if (bLocal)
+		{
+			Block();
+			if (bBlockedHit)
+			{
+				Attack();
+			}
+		}
+		else
+		{
+			Roll();
+		}
+	}
+}
+
+void ABossAI::CheckDistanceToPlayer()
+{
+	if (FVector::Dist(GetActorLocation(), PlayerReference->GetActorLocation()) < DistanceToPlayerThreshold && !bIsAttacking)
+	{
+		CombatChoice();
+	}
 }
 
 // Called every frame
@@ -36,6 +101,16 @@ void ABossAI::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
+	// makes it so the AI is always looking at the player
+	FVector PlayerLocation = PlayerReference->GetActorLocation() - GetActorLocation();
+	PlayerLocation.Normalize();
+
+	FRotator NewLookAt = PlayerLocation.Rotation();
+	NewLookAt.Roll = 0.0f;
+	NewLookAt.Pitch = 0.0f;
+
+	SetActorRotation(NewLookAt);
+	
 }
 
 void ABossAI::Damage(float Damage)
@@ -43,6 +118,8 @@ void ABossAI::Damage(float Damage)
 	if (bIsBlocking)
 	{
 		PlayAnimMontage(BlockingHitMontage);
+		bBlockedHit = true;
+		CombatChoice();
 	}
 	else
 	{
