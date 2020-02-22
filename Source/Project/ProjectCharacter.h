@@ -37,8 +37,12 @@ protected:
 	UPROPERTY(VisibleAnywhere)
 	class UPawnNoiseEmitterComponent* NoiseEmitterComp;
 
+	UPROPERTY(VisibleAnywhere)
+	class UPointLightComponent* PointLight;
+
 	bool bIsCrouched;
 
+	UPROPERTY(BlueprintReadOnly)
 	class ASword* Weapon;
 
 	UPROPERTY(EditDefaultsOnly)
@@ -93,6 +97,15 @@ protected:
 
 	UPROPERTY(EditDefaultsOnly)
 	UAnimMontage* BlockingHitMontage;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+	bool bUsePointLight;
+
+	UPROPERTY(EditDefaultsOnly)
+	float PointLightRate;
+
+	UPROPERTY(EditDefaultsOnly)
+	float PointLightRadius;
 
 public:
 

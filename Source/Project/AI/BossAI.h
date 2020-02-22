@@ -14,6 +14,7 @@ class PROJECT_API ABossAI : public ACharacter, public ICombatInterface
 
 protected:
 
+	UPROPERTY(BlueprintReadOnly)
 	class ASword* Weapon;
 
 	UPROPERTY(EditDefaultsOnly)
@@ -40,11 +41,14 @@ protected:
 
 	class AProjectCharacter* PlayerReference;
 
+	UPROPERTY(EditDefaultsOnly)
 	float DistanceToPlayerThreshold;
 
 	bool bIsAttacking;
 
 	bool bBlockedHit;
+
+	int32 MontageIndex;
 
 public:
 	// Sets default values for this character's properties
@@ -67,6 +71,8 @@ protected:
 	void CombatChoice();
 
 	void CheckDistanceToPlayer();
+
+	UAnimMontage* MontageToPlay();
 
 public:	
 	// Called every frame

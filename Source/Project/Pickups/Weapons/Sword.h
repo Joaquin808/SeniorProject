@@ -6,6 +6,8 @@
 #include "Pickups/Pickup.h"
 #include "Sword.generated.h"
 
+class UBoxComponent;
+
 UCLASS()
 class PROJECT_API ASword : public APickup
 {
@@ -19,6 +21,47 @@ protected:
 	UStaticMeshComponent* SwordMesh;
 
 	UPROPERTY(VisibleAnywhere)
-	class UBoxComponent* CollisionBox;
+	UBoxComponent* CollisionBox;
+
+	UPROPERTY(VisibleAnywhere)
+	UBoxComponent* Collision1;
+
+	UPROPERTY(VisibleAnywhere)
+	UBoxComponent* Collision2;
+
+	UPROPERTY(VisibleAnywhere)
+	UBoxComponent* Collision3;
+
+	UPROPERTY(VisibleAnywhere)
+	UBoxComponent* Collision4;
+
+	UPROPERTY(VisibleAnywhere)
+	UBoxComponent* Collision5;
+
+	TArray<UBoxComponent*> CollisionBoxes;
+
+	FTimerHandle TimerHandle_Attack;
+
+	UPROPERTY(EditDefaultsOnly)
+	float AttackDistance;
+
+	AActor* Owner;
+
+	UPROPERTY(EditDefaultsOnly)
+	float Damage;
+
+protected:
+
+	virtual void BeginPlay() override;
+
+public:
+
+	void Attack();
+
+	UFUNCTION(BlueprintCallable)
+	void StartAttack();
+
+	UFUNCTION(BlueprintCallable)
+	void StopAttack();
 	
 };

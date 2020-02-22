@@ -6,6 +6,7 @@
 #include "ProjectCharacter.h"
 #include "NavigationSystem.h"
 #include "TimerManager.h"
+#include "Blueprint/AIBlueprintHelperLibrary.h"
 
 // Sets default values
 ABossAI::ABossAI()
@@ -43,23 +44,32 @@ void ABossAI::BeginPlay()
 
 void ABossAI::ApproachPlayer()
 {
-	UNavigationSystemV1::SimpleMoveToActor(GetController(), PlayerReference);
+	UE_LOG(LogTemp, Log, TEXT("Approach player"));
+	UAIBlueprintHelperLibrary::SimpleMoveToActor(GetController(), PlayerReference);
 }
 
 void ABossAI::Attack()
 {
-	bIsAttacking = true;
-	PlayAnimMontage(AttackMontage);
+	UE_LOG(LogTemp, Log, TEXT("Attack"));
+	//bIsAttacking = true;
+	PlayAnimMontage(MontageToPlay());
+	MontageIndex++;
+	if (MontageIndex > (AttackAnimations.Num() - 1))
+	{
+		MontageIndex = 0;
+	}
 }
 
 void ABossAI::Block()
 {
+	UE_LOG(LogTemp, Log, TEXT("Block"));
 	bIsBlocking = true;
 	PlayAnimMontage(BlockingMontage);
 }
 
 void ABossAI::UnBlock()
 {
+	UE_LOG(LogTemp, Log, TEXT("UnBlock"));
 	bIsBlocking = false;
 }
 
@@ -70,6 +80,7 @@ void ABossAI::Roll()
 
 void ABossAI::CombatChoice()
 {
+	UE_LOG(LogTemp, Log, TEXT("Combat choice"));
 	if (PlayerReference->bIsAttacking)
 	{
 		bool bLocal = FMath::RandBool();
@@ -86,14 +97,29 @@ void ABossAI::CombatChoice()
 			Roll();
 		}
 	}
+	else
+	{
+		Attack();
+	}
 }
 
 void ABossAI::CheckDistanceToPlayer()
 {
-	if (FVector::Dist(GetActorLocation(), PlayerReference->GetActorLocation()) < DistanceToPlayerThreshold && !bIsAttacking)
+	UE_LOG(LogTemp, Log, TEXT("Check Distance to Player"));
+	if ((GetActorLocation() - PlayerReference->GetActorLocation()).Size() <= DistanceToPlayerThreshold && !bIsAttacking)
 	{
+		UE_LOG(LogTemp, Log, TEXT("Within distance"));
 		CombatChoice();
 	}
+	else
+	{
+		ApproachPlayer();
+	}
+}
+
+UAnimMontage * ABossAI::MontageToPlay()
+{
+	return AttackAnimations[MontageIndex];
 }
 
 // Called every frame
@@ -115,6 +141,7 @@ void ABossAI::Tick(float DeltaTime)
 
 void ABossAI::Damage(float Damage)
 {
+	UE_LOG(LogTemp, Log, TEXT("Damage done to BossAI"));
 	if (bIsBlocking)
 	{
 		PlayAnimMontage(BlockingHitMontage);

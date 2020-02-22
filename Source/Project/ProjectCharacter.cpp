@@ -18,6 +18,7 @@
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Components/PawnNoiseEmitterComponent.h"
 #include "Actors/AbilityLight.h"
+#include "Components/PointLightComponent.h"
 
 //////////////////////////////////////////////////////////////////////////
 // AProjectCharacter
@@ -45,12 +46,8 @@ AProjectCharacter::AProjectCharacter()
 
 	NoiseEmitterComp = CreateDefaultSubobject<UPawnNoiseEmitterComponent>(TEXT("NoiseEmitterComp"));
 
-	// Create a mesh component that will be used when being viewed from a '1st person' view (when controlling this pawn)
-	/**Mesh1P = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("CharacterMesh1P"));
-	Mesh1P->SetOnlyOwnerSee(true);
-	Mesh1P->SetupAttachment(FirstPersonCameraComponent);
-	Mesh1P->bCastDynamicShadow = false;
-	Mesh1P->CastShadow = false;**/
+	// for some reason it doesn't actually get created during construction
+	//PointLight = CreateDefaultSubobject<UPointLightComponent>(TEXT("PointLight"));
 
 }
 
@@ -76,7 +73,7 @@ void AProjectCharacter::Attack()
 {
 	if (Weapon)
 	{
-		bIsAttacking = true;
+		//bIsAttacking = true;
 
 		if (Stance == EStance::Combat)
 		{
@@ -109,6 +106,7 @@ void AProjectCharacter::UnBlock()
 
 void AProjectCharacter::Damage(float Damage)
 {
+	UE_LOG(LogTemp, Log, TEXT("Damage done to player"));
 	if (bIsBlocking)
 	{
 		PlayAnimMontage(BlockingHitMontage);
@@ -121,10 +119,24 @@ void AProjectCharacter::Damage(float Damage)
 
 void AProjectCharacter::Ability()
 {
+	/**if (PointLight)
+	{
+		PointLight->SetAttenuationRadius(2000.0f);
+	}
+	else
+	{
+		UE_LOG(LogTemp, Log, TEXT("Point light doesn't exist"));
+	}**/
+
 	if (GetWorldTimerManager().IsTimerActive(TimerHandle_SonarCooldown))
 	{
 		UE_LOG(LogTemp, Log, TEXT("Timer is still active"));
 		return;
+	}
+
+	if (bUsePointLight)
+	{
+		SonarCooldownRate = PointLightRate;
 	}
 
 	GetWorldTimerManager().SetTimer(TimerHandle_SonarCooldown, this, &AProjectCharacter::SonarCooldown, 0.01, false, SonarCooldownRate);
@@ -211,6 +223,11 @@ void AProjectCharacter::SonarCooldown()
 	{
 		AbilityLight->Destroy();
 	}
+
+	/**if (bUsePointLight)
+	{
+		PointLight->SetAttenuationRadius(FMath::Lerp(PointLightRadius, 0.0f, 2.0f));
+	}**/
 }
 
 void AProjectCharacter::OnOverlapBegin(UPrimitiveComponent * OverlappedComp, AActor * OtherActor, UPrimitiveComponent * OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult & SweepResult)
