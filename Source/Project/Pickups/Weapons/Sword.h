@@ -50,6 +50,8 @@ protected:
 	UPROPERTY(EditDefaultsOnly)
 	float Damage;
 
+	TArray<AActor*> HitActors;
+
 protected:
 
 	virtual void BeginPlay() override;

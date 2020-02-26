@@ -67,6 +67,35 @@ void AProjectCharacter::BeginPlay()
 
 	Health = MaxHealth;
 
+	// I need the mesh hidden when were in the official map for the horror process, but need it visible in the BossMap for animations
+	if (UGameplayStatics::GetCurrentLevelName(this) == "Official")
+	{
+		GetMesh()->SetHiddenInGame(true);
+	}
+	else if (UGameplayStatics::GetCurrentLevelName(this) == "BossMap")
+	{
+		GetMesh()->SetHiddenInGame(false);
+
+		// Spawn weapon if we're in the boss map and change the players stance to combat
+		if (Weapon)
+		{
+			return;
+		}
+
+		FActorSpawnParameters SpawnParams;
+		SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+		Weapon = GetWorld()->SpawnActor<ASword>(WeaponClass, FVector(-10.0f, 20.0f, 10.0f), FRotator(0.0f, 0.0f, -90.0f), SpawnParams);
+
+		if (Weapon)
+		{
+			Weapon->SetActorEnableCollision(false);
+			FString AttachmentSocket = "Socket_Weapon";
+			FName SocketName = FName(*AttachmentSocket);
+			Weapon->AttachToComponent(GetMesh(), FAttachmentTransformRules::SnapToTargetIncludingScale, SocketName);
+			Weapon->SetOwner(this);
+			Stance = EStance::Combat;
+		}
+	}
 }
 
 void AProjectCharacter::Attack()
@@ -85,7 +114,6 @@ void AProjectCharacter::Attack()
 		}
 
 		PlayAnimMontage(AttackMontage);
-		UE_LOG(LogTemp, Log, TEXT("Attack"));
 	}
 }
 
@@ -119,15 +147,6 @@ void AProjectCharacter::Damage(float Damage)
 
 void AProjectCharacter::Ability()
 {
-	/**if (PointLight)
-	{
-		PointLight->SetAttenuationRadius(2000.0f);
-	}
-	else
-	{
-		UE_LOG(LogTemp, Log, TEXT("Point light doesn't exist"));
-	}**/
-
 	if (GetWorldTimerManager().IsTimerActive(TimerHandle_SonarCooldown))
 	{
 		UE_LOG(LogTemp, Log, TEXT("Timer is still active"));
@@ -184,6 +203,11 @@ void AProjectCharacter::Ability()
 		SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
 		AbilityLight = GetWorld()->SpawnActor<AAbilityLight>(AbilityLightClass, GetActorLocation() + FVector(0, 0, AbilityLightHeight), FRotator::ZeroRotator, SpawnParams);
 	}
+
+	if (bUsePointLight)
+	{
+		ExpandLight();
+	}
 }
 
 void AProjectCharacter::DoCrouch()
@@ -224,10 +248,10 @@ void AProjectCharacter::SonarCooldown()
 		AbilityLight->Destroy();
 	}
 
-	/**if (bUsePointLight)
+	if (bUsePointLight)
 	{
-		PointLight->SetAttenuationRadius(FMath::Lerp(PointLightRadius, 0.0f, 2.0f));
-	}**/
+		ReverseLight();
+	}
 }
 
 void AProjectCharacter::OnOverlapBegin(UPrimitiveComponent * OverlappedComp, AActor * OtherActor, UPrimitiveComponent * OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult & SweepResult)
@@ -238,31 +262,6 @@ void AProjectCharacter::OnOverlapBegin(UPrimitiveComponent * OverlappedComp, AAc
 	{
 		Object->StaticMesh->SetRenderCustomDepth(true);
 		Object->StaticMesh->SetCustomDepthStencilValue(2);
-	}
-
-	auto Sword = Cast<ASword>(OtherActor);
-	if (Sword)
-	{
-		UE_LOG(LogTemp, Log, TEXT("Overlapped sword"));
-		if (Weapon)
-		{
-			UE_LOG(LogTemp, Log, TEXT("Return"));
-			return;
-		}
-
-		FActorSpawnParameters SpawnParams;
-		SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
-		Weapon = GetWorld()->SpawnActor<ASword>(WeaponClass, FVector(-10.0f, 20.0f, 10.0f), FRotator(0.0f, 0.0f, -90.0f), SpawnParams);
-
-		if (Weapon)
-		{
-			Weapon->SetActorEnableCollision(false);
-			FString AttachmentSocket = "Socket_Weapon";
-			FName SocketName = FName(*AttachmentSocket);
-			Weapon->AttachToComponent(GetMesh(), FAttachmentTransformRules::SnapToTargetIncludingScale, SocketName);
-			Stance = EStance::Armed;
-			UE_LOG(LogTemp, Log, TEXT("Spawned weapon"));
-		}
 	}
 }
 

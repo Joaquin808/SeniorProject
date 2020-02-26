@@ -31,6 +31,7 @@ void ABossAI::BeginPlay()
 		FString AttachmentSocket = "Socket_Weapon";
 		FName SocketName = FName(*AttachmentSocket);
 		Weapon->AttachToComponent(GetMesh(), FAttachmentTransformRules::SnapToTargetIncludingScale, SocketName);
+		Weapon->SetOwner(this);
 	}
 
 	Health = MaxHealth;
@@ -39,7 +40,7 @@ void ABossAI::BeginPlay()
 	ApproachPlayer();
 
 	FTimerHandle TimerHandle_CheckDistanceToPlayer;
-	GetWorldTimerManager().SetTimer(TimerHandle_CheckDistanceToPlayer, this, &ABossAI::CheckDistanceToPlayer, 1.0f, true);
+	GetWorldTimerManager().SetTimer(TimerHandle_CheckDistanceToPlayer, this, &ABossAI::CheckDistanceToPlayer, 0.1f, true);
 }
 
 void ABossAI::ApproachPlayer()
@@ -50,9 +51,13 @@ void ABossAI::ApproachPlayer()
 
 void ABossAI::Attack()
 {
-	UE_LOG(LogTemp, Log, TEXT("Attack"));
+	if (GetWorldTimerManager().IsTimerActive(TimerHandle_EventTimer))
+	{
+		return;
+	}
+
 	//bIsAttacking = true;
-	PlayAnimMontage(MontageToPlay());
+	GetWorldTimerManager().SetTimer(TimerHandle_EventTimer, this, &ABossAI::ClearTimer, 0.1f, false, PlayAnimMontage(MontageToPlay()));
 	MontageIndex++;
 	if (MontageIndex > (AttackAnimations.Num() - 1))
 	{
@@ -120,6 +125,11 @@ void ABossAI::CheckDistanceToPlayer()
 UAnimMontage * ABossAI::MontageToPlay()
 {
 	return AttackAnimations[MontageIndex];
+}
+
+void ABossAI::ClearTimer()
+{
+	GetWorldTimerManager().ClearTimer(TimerHandle_EventTimer);
 }
 
 // Called every frame

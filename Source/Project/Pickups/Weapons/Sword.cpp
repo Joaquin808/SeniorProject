@@ -65,15 +65,22 @@ void ASword::Attack()
 		FVector End = Start + (Box->GetForwardVector() * AttackDistance);
 
 		FCollisionQueryParams QueryParams;
-		//QueryParams.AddIgnoredActor(Owner);
+		QueryParams.AddIgnoredActor(Owner);
 
 		if (GetWorld()->LineTraceSingleByChannel(Hit, Start, End, ECC_Visibility, QueryParams))
 		{
-			UE_LOG(LogTemp, Log, TEXT("Hit Something"));
 			auto Interface = Cast<ICombatInterface>(Hit.GetActor());
 			if (Interface)
 			{
-				Interface->Damage(Damage);
+				if (HitActors.Contains(Hit.GetActor()))
+				{
+
+				}
+				else
+				{
+					HitActors.Add(Hit.GetActor());
+					Interface->Damage(Damage);
+				}
 			}
 		}
 		
@@ -83,12 +90,11 @@ void ASword::Attack()
 
 void ASword::StartAttack()
 {
-	UE_LOG(LogTemp, Log, TEXT("Start Attack"));
 	GetWorldTimerManager().SetTimer(TimerHandle_Attack, this, &ASword::Attack, 0.001f, true);
 }
 
 void ASword::StopAttack()
 {
-	UE_LOG(LogTemp, Log, TEXT("Stop Attack"));
 	GetWorldTimerManager().ClearTimer(TimerHandle_Attack);
+	HitActors.Empty();
 }

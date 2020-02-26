@@ -50,6 +50,8 @@ protected:
 
 	int32 MontageIndex;
 
+	FTimerHandle TimerHandle_EventTimer;
+
 public:
 	// Sets default values for this character's properties
 	ABossAI();
@@ -73,6 +75,8 @@ protected:
 	void CheckDistanceToPlayer();
 
 	UAnimMontage* MontageToPlay();
+
+	void ClearTimer();
 
 public:	
 	// Called every frame
