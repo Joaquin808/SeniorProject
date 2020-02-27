@@ -52,6 +52,30 @@ protected:
 
 	FTimerHandle TimerHandle_EventTimer;
 
+	class ARoamingPoint* RoamingPoint1;
+
+	UPROPERTY(EditAnywhere)
+	FVector RoamingPoint1RelativeLocation;
+
+	FVector RoamingPoint1Location;
+
+	class ARoamingPoint* RoamingPoint2;
+
+	UPROPERTY(EditAnywhere)
+	FVector RoamingPoint2RelativeLocation;
+
+	FVector RoamingPoint2Location;
+
+	class ARoamingPoint* RoamingPoint3;
+
+	UPROPERTY(EditAnywhere)
+	FVector RoamingPoint3RelativeLocation;
+
+	FVector RoamingPoint3Location;
+
+	UPROPERTY(EditDefaultsOnly)
+	TSubclassOf<class ARoamingPoint> RoamingPointClass;
+
 public:
 	// Sets default values for this character's properties
 	ABossAI();
@@ -77,6 +101,10 @@ protected:
 	UAnimMontage* MontageToPlay();
 
 	void ClearTimer();
+
+	void MoveAroundPlayer();
+
+	void SpawnRoamingPoints();
 
 public:	
 	// Called every frame
