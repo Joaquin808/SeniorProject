@@ -7,7 +7,6 @@
 #include "NavigationSystem.h"
 #include "TimerManager.h"
 #include "Blueprint/AIBlueprintHelperLibrary.h"
-#include "Actors/RoamingPoint.h"
 
 // Sets default values
 ABossAI::ABossAI()
@@ -37,17 +36,11 @@ void ABossAI::BeginPlay()
 
 	Health = MaxHealth;
 
-	SpawnRoamingPoints();
-
-	FTimerHandle TimerHandle_RandomMovement;
-	GetWorldTimerManager().SetTimer(TimerHandle_RandomMovement, this, &ABossAI::MoveAroundPlayer, 2.0f, true);
-
-	// temporarily commenting out to test random movement
-	/**PlayerReference = Cast<AProjectCharacter>(UGameplayStatics::GetPlayerCharacter(this, 0));
+	PlayerReference = Cast<AProjectCharacter>(UGameplayStatics::GetPlayerCharacter(this, 0));
 	ApproachPlayer();
 
 	FTimerHandle TimerHandle_CheckDistanceToPlayer;
-	GetWorldTimerManager().SetTimer(TimerHandle_CheckDistanceToPlayer, this, &ABossAI::CheckDistanceToPlayer, 0.1f, true);**/
+	GetWorldTimerManager().SetTimer(TimerHandle_CheckDistanceToPlayer, this, &ABossAI::CheckDistanceToPlayer, 0.1f, true);
 }
 
 void ABossAI::ApproachPlayer()
@@ -137,46 +130,6 @@ UAnimMontage * ABossAI::MontageToPlay()
 void ABossAI::ClearTimer()
 {
 	GetWorldTimerManager().ClearTimer(TimerHandle_EventTimer);
-}
-
-void ABossAI::MoveAroundPlayer()
-{
-	//UAIBlueprintHelperLibrary::SimpleMoveToLocation(GetController(), UNavigationSystemV1::GetRandomReachablePointInRadius(this, PlayerReference->GetActorLocation(), 300.0f));
-
-	int32 Num = FMath::RandRange(0, 2);
-	switch (Num)
-	{
-	case 0:
-		UAIBlueprintHelperLibrary::SimpleMoveToActor(GetController(), RoamingPoint1);
-		break;
-	case 1:
-		UAIBlueprintHelperLibrary::SimpleMoveToActor(GetController(), RoamingPoint2);
-		break;
-	case 2:
-		UAIBlueprintHelperLibrary::SimpleMoveToActor(GetController(), RoamingPoint3);
-		break;
-	}
-}
-
-void ABossAI::SpawnRoamingPoints()
-{
-	FActorSpawnParameters SpawnParams;
-	SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
-
-	RoamingPoint1 = GetWorld()->SpawnActor<ARoamingPoint>(RoamingPointClass, SpawnParams);
-	RoamingPoint1->AttachToComponent(GetMesh(), FAttachmentTransformRules::SnapToTargetIncludingScale);
-	RoamingPoint1->SetActorRelativeLocation(RoamingPoint1RelativeLocation);
-	RoamingPoint1Location = RoamingPoint1RelativeLocation;
-
-	RoamingPoint2 = GetWorld()->SpawnActor<ARoamingPoint>(RoamingPointClass, SpawnParams);
-	RoamingPoint2->AttachToComponent(GetMesh(), FAttachmentTransformRules::SnapToTargetIncludingScale);
-	RoamingPoint2->SetActorRelativeLocation(RoamingPoint2RelativeLocation);
-	RoamingPoint2Location = RoamingPoint2RelativeLocation;
-
-	RoamingPoint3 = GetWorld()->SpawnActor<ARoamingPoint>(RoamingPointClass, SpawnParams);
-	RoamingPoint3->AttachToComponent(GetMesh(), FAttachmentTransformRules::SnapToTargetIncludingScale);
-	RoamingPoint3->SetActorRelativeLocation(RoamingPoint3RelativeLocation);
-	RoamingPoint3Location = RoamingPoint3RelativeLocation;
 }
 
 // Called every frame
