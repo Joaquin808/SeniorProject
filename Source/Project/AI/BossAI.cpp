@@ -7,6 +7,7 @@
 #include "NavigationSystem.h"
 #include "TimerManager.h"
 #include "Blueprint/AIBlueprintHelperLibrary.h"
+#include "Actors/RoamingPoint.h"
 
 // Sets default values
 ABossAI::ABossAI()
@@ -39,19 +40,26 @@ void ABossAI::BeginPlay()
 	PlayerReference = Cast<AProjectCharacter>(UGameplayStatics::GetPlayerCharacter(this, 0));
 	ApproachPlayer();
 
+	SpawnRoamingPoints();
+
 	FTimerHandle TimerHandle_CheckDistanceToPlayer;
 	GetWorldTimerManager().SetTimer(TimerHandle_CheckDistanceToPlayer, this, &ABossAI::CheckDistanceToPlayer, 0.1f, true);
 }
 
 void ABossAI::ApproachPlayer()
 {
+	if (GetWorldTimerManager().IsTimerActive(TimerHandle_MoveAroundPlayer))
+	{
+		return;
+	}
+
 	UE_LOG(LogTemp, Log, TEXT("Approach player"));
-	UAIBlueprintHelperLibrary::SimpleMoveToActor(GetController(), PlayerReference);
+	UAIBlueprintHelperLibrary::SimpleMoveToLocation(GetController(), PlayerReference->GetActorLocation() - FVector(50, 0, 0));
 }
 
 void ABossAI::Attack()
 {
-	if (GetWorldTimerManager().IsTimerActive(TimerHandle_EventTimer))
+	if (GetWorldTimerManager().IsTimerActive(TimerHandle_EventTimer)) //|| GetWorldTimerManager().IsTimerActive(TimerHandle_MoveAroundPlayer))
 	{
 		return;
 	}
@@ -65,11 +73,21 @@ void ABossAI::Attack()
 	}
 }
 
+void ABossAI::HitWasBlocked()
+{
+
+}
+
 void ABossAI::Block()
 {
+	if (GetWorldTimerManager().IsTimerActive(TimerHandle_EventTimer))
+	{
+		return;
+	}
+
 	UE_LOG(LogTemp, Log, TEXT("Block"));
 	bIsBlocking = true;
-	PlayAnimMontage(BlockingMontage);
+	GetWorldTimerManager().SetTimer(TimerHandle_EventTimer, this, &ABossAI::ClearTimer, 0.1f, false, PlayAnimMontage(BlockingMontage));
 }
 
 void ABossAI::UnBlock()
@@ -85,7 +103,7 @@ void ABossAI::Roll()
 
 void ABossAI::CombatChoice()
 {
-	UE_LOG(LogTemp, Log, TEXT("Combat choice"));
+	//UE_LOG(LogTemp, Log, TEXT("Combat choice"));
 	if (PlayerReference->bIsAttacking)
 	{
 		bool bLocal = FMath::RandBool();
@@ -94,26 +112,53 @@ void ABossAI::CombatChoice()
 			Block();
 			if (bBlockedHit)
 			{
+				StopRoamingTimer();
 				Attack();
+			}
+			else
+			{
+				StartRoamingTimer();
 			}
 		}
 		else
 		{
+			StopRoamingTimer();
 			Roll();
 		}
 	}
 	else
 	{
-		Attack();
+		bool bLocal = FMath::RandBool();
+		if (bLocal)
+		{
+			Block();
+			if (bBlockedHit)
+			{
+				StopRoamingTimer();
+				Attack();
+			}
+			else
+			{
+				StartRoamingTimer();
+			}
+		}
+		else
+		{
+			StopRoamingTimer();
+			Attack();
+		}
+
+		//StopRoamingTimer();
+		//Attack();
 	}
 }
 
 void ABossAI::CheckDistanceToPlayer()
 {
-	UE_LOG(LogTemp, Log, TEXT("Check Distance to Player"));
+	//UE_LOG(LogTemp, Log, TEXT("Check Distance to Player"));
 	if ((GetActorLocation() - PlayerReference->GetActorLocation()).Size() <= DistanceToPlayerThreshold && !bIsAttacking)
 	{
-		UE_LOG(LogTemp, Log, TEXT("Within distance"));
+		//UE_LOG(LogTemp, Log, TEXT("Within distance"));
 		CombatChoice();
 	}
 	else
@@ -130,6 +175,106 @@ UAnimMontage * ABossAI::MontageToPlay()
 void ABossAI::ClearTimer()
 {
 	GetWorldTimerManager().ClearTimer(TimerHandle_EventTimer);
+}
+
+void ABossAI::SpawnRoamingPoints()
+{
+	FActorSpawnParameters SpawnParams;
+	SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+
+	RoamingPoint1 = GetWorld()->SpawnActor<ARoamingPoint>(RoamingPointClass, SpawnParams);
+	RoamingPoint2 = GetWorld()->SpawnActor<ARoamingPoint>(RoamingPointClass, SpawnParams);
+	RoamingPoint3 = GetWorld()->SpawnActor<ARoamingPoint>(RoamingPointClass, SpawnParams);
+
+	if (RoamingPoint1 && RoamingPoint2 && RoamingPoint3)
+	{
+		RoamingPoint1->AttachToComponent(GetMesh(), FAttachmentTransformRules::SnapToTargetIncludingScale);
+		RoamingPoint1->SetActorLocation(GetActorLocation() + RoamingPoint1Location);
+
+		RoamingPoint2->AttachToComponent(GetMesh(), FAttachmentTransformRules::SnapToTargetIncludingScale);
+		RoamingPoint2->SetActorLocation(GetActorLocation() + RoamingPoint2Location);
+
+		RoamingPoint3->AttachToComponent(GetMesh(), FAttachmentTransformRules::SnapToTargetIncludingScale);
+		RoamingPoint3->SetActorLocation(GetActorLocation() + RoamingPoint3Location);
+	}
+
+}
+
+void ABossAI::MoveAroundPlayer()
+{
+	int32 Rand = FMath::RandRange(0, 2);
+
+	TArray<AActor*> RoamingPoints;
+	RoamingPoints.Add(RoamingPoint1);
+	RoamingPoints.Add(RoamingPoint2);
+	RoamingPoints.Add(RoamingPoint3);
+
+	float Distance = 0.0f;;
+	AActor* Target = nullptr;
+
+	for (int32 i = 0; i < RoamingPoints.Num(); i++)
+	{
+		// if Distance is equal to zero, then set the distance to the first RoamingPoints distance to the player
+		if (Distance == 0.0f)
+		{
+			Distance = FVector::Dist(RoamingPoints[i]->GetActorLocation(), PlayerReference->GetActorLocation());
+		}
+
+		// if we can find a RoamingPoint that is closer to the player, then we want to set that actor as our target and update the largest distance
+		if (FVector::Dist(RoamingPoints[i]->GetActorLocation(), PlayerReference->GetActorLocation()) <= Distance)
+		{
+			Distance = FVector::Dist(RoamingPoints[i]->GetActorLocation(), PlayerReference->GetActorLocation());
+			Target = RoamingPoints[i];
+		}
+	}
+
+	// if the target is not equal to nullptr, simply move to the current location of the current target (RoamingPoints)
+	if (Target != nullptr)
+	{
+		UE_LOG(LogTemp, Log, TEXT("Move Around Player"));
+		AIMoveToLocation = Target->GetActorLocation();
+		UAIBlueprintHelperLibrary::SimpleMoveToLocation(GetController(), AIMoveToLocation);
+	}
+	else
+	{
+		GEngine->AddOnScreenDebugMessage(-1, 1.0f, FColor::Red, "Target is nullptr");
+	}
+}
+
+void ABossAI::StartRoamingTimer()
+{
+	if (GetWorldTimerManager().IsTimerActive(TimerHandle_MoveAroundPlayer))
+	{
+		return;
+	}
+
+	UE_LOG(LogTemp, Log, TEXT("StartRoamingTimer"));
+	GetWorldTimerManager().SetTimer(TimerHandle_MoveAroundPlayer, this, &ABossAI::MoveAroundPlayer, 1.5f, true);
+}
+
+void ABossAI::StopRoamingTimer()
+{
+	if (GetWorldTimerManager().IsTimerActive(TimerHandle_EventTimer))
+	{
+		return;
+	}
+
+	if (GetWorldTimerManager().IsTimerActive(TimerHandle_MoveAroundPlayer))
+	{
+		if (FVector::Dist(GetActorLocation(), AIMoveToLocation) <= 50)
+		{
+			UE_LOG(LogTemp, Log, TEXT("StopRoamingTimer"));
+			GetWorldTimerManager().ClearTimer(TimerHandle_MoveAroundPlayer);
+			return;
+		}
+		else
+		{
+			return;
+		}
+	}
+
+	UE_LOG(LogTemp, Log, TEXT("StopRoamingTimer"));
+	GetWorldTimerManager().ClearTimer(TimerHandle_MoveAroundPlayer);
 }
 
 // Called every frame
@@ -154,8 +299,9 @@ void ABossAI::Damage(float Damage)
 	UE_LOG(LogTemp, Log, TEXT("Damage done to BossAI"));
 	if (bIsBlocking)
 	{
-		PlayAnimMontage(BlockingHitMontage);
+		GetWorldTimerManager().SetTimer(TimerHandle_EventTimer, this, &ABossAI::ClearTimer, 0.1f, false, PlayAnimMontage(BlockingHitMontage));
 		bBlockedHit = true;
+		PlayerReference->HitWasBlocked();
 		CombatChoice();
 	}
 	else

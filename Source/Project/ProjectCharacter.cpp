@@ -114,7 +114,13 @@ void AProjectCharacter::Attack()
 		}
 
 		PlayAnimMontage(AttackMontage);
+		//bIsAttacking = false;
 	}
+}
+
+void AProjectCharacter::HitWasBlocked()
+{
+
 }
 
 void AProjectCharacter::Block()

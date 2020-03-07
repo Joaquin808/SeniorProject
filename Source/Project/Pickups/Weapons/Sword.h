@@ -52,6 +52,9 @@ protected:
 
 	TArray<AActor*> HitActors;
 
+	UPROPERTY(EditDefaultsOnly)
+	bool bDrawDebugLines;
+
 protected:
 
 	virtual void BeginPlay() override;

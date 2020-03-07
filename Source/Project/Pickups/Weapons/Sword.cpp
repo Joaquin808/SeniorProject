@@ -84,7 +84,10 @@ void ASword::Attack()
 			}
 		}
 		
-		DrawDebugLine(GetWorld(), Start, End, FColor::Red, true, 1.0f);
+		if (bDrawDebugLines)
+		{
+			DrawDebugLine(GetWorld(), Start, End, FColor::Red, false, 1.0f);
+		}
 	}
 }
 
