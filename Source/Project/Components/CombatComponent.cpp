@@ -4,6 +4,7 @@
 #include "Engine/Engine.h"
 #include "Kismet/GameplayStatics.h"
 #include "Engine/World.h"
+#include "GameFramework/CharacterMovementComponent.h"
 
 // Sets default values for this component's properties
 UCombatComponent::UCombatComponent()
@@ -41,8 +42,6 @@ bool UCombatComponent::TakeDamage(float Damage)
 	{
 		GetWorld()->GetTimerManager().SetTimer(TimerHandle_EventTimer, this, &UCombatComponent::ClearTimer, 0.1f, false, Owner->PlayAnimMontage(BlockingHitMontage));
 		bBlockedHit = true;
-		//PlayerReference->HitWasBlocked();
-		//CombatChoice();
 		return false;
 	}
 	else
@@ -75,9 +74,6 @@ UAnimMontage* UCombatComponent::MontageToPlay()
 
 void UCombatComponent::Block()
 {
-	//bIsBlocking = true;
-	//Owner->PlayAnimMontage(BlockingMontage);
-
 	if (GetWorld()->GetTimerManager().IsTimerActive(TimerHandle_EventTimer))
 	{
 		return;
@@ -121,8 +117,8 @@ void UCombatComponent::HitWasBlocked()
 
 void UCombatComponent::BlockedHitDone()
 {
-	//GetCharacterMovement()->SetMovementMode(EMovementMode::MOVE_Walking);
-	bHitWasBlocked = true;
+	Owner->GetCharacterMovement()->SetMovementMode(EMovementMode::MOVE_Walking);
+	bHitWasBlocked = false;
 	GetWorld()->GetTimerManager().ClearTimer(TimerHandle_EventTimer);
 }
 

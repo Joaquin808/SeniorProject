@@ -113,6 +113,9 @@ protected:
     UPROPERTY(EditDefaultsOnly)
     float StunnedDuration;
 
+	UPROPERTY(BlueprintReadWrite)
+	bool bAbilityIsActive;
+
 public:
 
 	AProjectCharacter();

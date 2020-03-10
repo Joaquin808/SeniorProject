@@ -92,21 +92,11 @@ protected:
 
 	void ApproachPlayer();
 
-	void Attack();
-
-	void Block();
-
-	void UnBlock();
-
 	void Roll();
 
 	void CombatChoice();
 
 	void CheckDistanceToPlayer();
-
-	UAnimMontage* MontageToPlay();
-
-	void ClearTimer();
 
 	void SpawnRoamingPoints();
 
