@@ -20,6 +20,9 @@ protected:
 	UPROPERTY(EditDefaultsOnly)
 	TSubclassOf<ASword> WeaponClass;
 
+	UPROPERTY(VisibleAnywhere)
+	class UCombatComponent* CombatComponent;
+
 	bool bIsBlocking;
 
 	UPROPERTY(EditDefaultsOnly)
@@ -74,6 +77,11 @@ protected:
 
 	FVector AIMoveToLocation;
 
+    UPROPERTY(EditDefaultsOnly)
+    float StunnedDuration;
+
+    bool bHitWasBlocked;
+
 public:
 	// Sets default values for this character's properties
 	ABossAI();
@@ -115,5 +123,7 @@ public:
 	virtual void Damage(float Damage) override;
 
 	void HitWasBlocked();
+
+    void BlockedHitDone();
 
 };

@@ -40,6 +40,9 @@ protected:
 	UPROPERTY(VisibleAnywhere)
 	class UPointLightComponent* PointLight;
 
+	UPROPERTY(VisibleAnywhere)
+	class UCombatComponent* CombatComponent;
+
 	bool bIsCrouched;
 
 	UPROPERTY(BlueprintReadOnly)
@@ -107,6 +110,9 @@ protected:
 	UPROPERTY(EditDefaultsOnly)
 	float PointLightRadius;
 
+    UPROPERTY(EditDefaultsOnly)
+    float StunnedDuration;
+
 public:
 
 	AProjectCharacter();
@@ -126,6 +132,8 @@ public:
 	float Health;
 
 	bool bIsAttacking;
+
+    class ABossAI* BossAIReference;
 
 protected:
 
@@ -170,6 +178,8 @@ public:
 	virtual void Damage(float Damage) override;
 
 	void HitWasBlocked();
+
+	void BlockedHitDone();
 
 	/** Returns Mesh1P subobject **/
 	//FORCEINLINE class USkeletalMeshComponent* GetMesh1P() const { return Mesh1P; }

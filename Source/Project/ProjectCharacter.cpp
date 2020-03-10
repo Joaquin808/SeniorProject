@@ -19,6 +19,8 @@
 #include "Components/PawnNoiseEmitterComponent.h"
 #include "Actors/AbilityLight.h"
 #include "Components/PointLightComponent.h"
+#include "AI/BossAI.h"
+#include "Components/CombatComponent.h"
 
 //////////////////////////////////////////////////////////////////////////
 // AProjectCharacter
@@ -49,6 +51,8 @@ AProjectCharacter::AProjectCharacter()
 	// for some reason it doesn't actually get created during construction
 	//PointLight = CreateDefaultSubobject<UPointLightComponent>(TEXT("PointLight"));
 
+	CombatComponent = CreateDefaultSubobject<UCombatComponent>(TEXT("CombatComponent"));
+
 }
 
 void AProjectCharacter::BeginPlay()
@@ -65,7 +69,7 @@ void AProjectCharacter::BeginPlay()
 		Light->SetActorLocation(GetActorLocation() + FVector(0, 0, LightHeight));
 	}
 
-	Health = MaxHealth;
+	CombatComponent->Owner = this;
 
 	// I need the mesh hidden when were in the official map for the horror process, but need it visible in the BossMap for animations
 	if (UGameplayStatics::GetCurrentLevelName(this) == "Official")
@@ -102,53 +106,38 @@ void AProjectCharacter::Attack()
 {
 	if (Weapon)
 	{
-		//bIsAttacking = true;
-
-		if (Stance == EStance::Combat)
-		{
-			
-		}
-		else
-		{
-			Stance = EStance::Combat;
-		}
-
-		PlayAnimMontage(AttackMontage);
-		//bIsAttacking = false;
+		CombatComponent->Attack();
 	}
 }
 
 void AProjectCharacter::HitWasBlocked()
 {
+	CombatComponent->HitWasBlocked();
+ 
+}
 
+void AProjectCharacter::BlockedHitDone()
+{
+	CombatComponent->BlockedHitDone();
 }
 
 void AProjectCharacter::Block()
 {
 	if (Weapon)
 	{
-		bIsBlocking = true;
-		PlayAnimMontage(BlockingMontage);
+		CombatComponent->Block();
 	}
 }
 
 void AProjectCharacter::UnBlock()
 {
-	bIsBlocking = false;
-	StopAnimMontage(BlockingMontage);
+	CombatComponent->UnBlock();
 }
 
 void AProjectCharacter::Damage(float Damage)
 {
 	UE_LOG(LogTemp, Log, TEXT("Damage done to player"));
-	if (bIsBlocking)
-	{
-		PlayAnimMontage(BlockingHitMontage);
-	}
-	else
-	{
-		Health = Health - Damage;
-	}
+	CombatComponent->TakeDamage(Damage);
 }
 
 void AProjectCharacter::Ability()

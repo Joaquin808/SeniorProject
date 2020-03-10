@@ -8,6 +8,8 @@
 #include "TimerManager.h"
 #include "Blueprint/AIBlueprintHelperLibrary.h"
 #include "Actors/RoamingPoint.h"
+#include "GameFramework/CharacterMovementComponent.h"
+#include "Components/CombatComponent.h"
 
 // Sets default values
 ABossAI::ABossAI()
@@ -15,6 +17,7 @@ ABossAI::ABossAI()
  	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
 
+	CombatComponent = CreateDefaultSubobject<UCombatComponent>(TEXT("CombatComponent"));
 }
 
 // Called when the game starts or when spawned
@@ -35,9 +38,10 @@ void ABossAI::BeginPlay()
 		Weapon->SetOwner(this);
 	}
 
-	Health = MaxHealth;
+	CombatComponent->Owner = this;
 
 	PlayerReference = Cast<AProjectCharacter>(UGameplayStatics::GetPlayerCharacter(this, 0));
+    PlayerReference->BossAIReference = this;
 	ApproachPlayer();
 
 	SpawnRoamingPoints();
@@ -57,45 +61,6 @@ void ABossAI::ApproachPlayer()
 	UAIBlueprintHelperLibrary::SimpleMoveToLocation(GetController(), PlayerReference->GetActorLocation() - FVector(50, 0, 0));
 }
 
-void ABossAI::Attack()
-{
-	if (GetWorldTimerManager().IsTimerActive(TimerHandle_EventTimer)) //|| GetWorldTimerManager().IsTimerActive(TimerHandle_MoveAroundPlayer))
-	{
-		return;
-	}
-
-	//bIsAttacking = true;
-	GetWorldTimerManager().SetTimer(TimerHandle_EventTimer, this, &ABossAI::ClearTimer, 0.1f, false, PlayAnimMontage(MontageToPlay()));
-	MontageIndex++;
-	if (MontageIndex > (AttackAnimations.Num() - 1))
-	{
-		MontageIndex = 0;
-	}
-}
-
-void ABossAI::HitWasBlocked()
-{
-
-}
-
-void ABossAI::Block()
-{
-	if (GetWorldTimerManager().IsTimerActive(TimerHandle_EventTimer))
-	{
-		return;
-	}
-
-	UE_LOG(LogTemp, Log, TEXT("Block"));
-	bIsBlocking = true;
-	GetWorldTimerManager().SetTimer(TimerHandle_EventTimer, this, &ABossAI::ClearTimer, 0.1f, false, PlayAnimMontage(BlockingMontage));
-}
-
-void ABossAI::UnBlock()
-{
-	UE_LOG(LogTemp, Log, TEXT("UnBlock"));
-	bIsBlocking = false;
-}
-
 void ABossAI::Roll()
 {
 
@@ -104,16 +69,16 @@ void ABossAI::Roll()
 void ABossAI::CombatChoice()
 {
 	//UE_LOG(LogTemp, Log, TEXT("Combat choice"));
-	if (PlayerReference->bIsAttacking)
-	{
+	//if (PlayerReference->bIsAttacking)
+	//{
 		bool bLocal = FMath::RandBool();
 		if (bLocal)
 		{
-			Block();
-			if (bBlockedHit)
+			CombatComponent->Block();
+			if (CombatComponent->bBlockedHit)
 			{
 				StopRoamingTimer();
-				Attack();
+				CombatComponent->Attack();
 			}
 			else
 			{
@@ -123,34 +88,14 @@ void ABossAI::CombatChoice()
 		else
 		{
 			StopRoamingTimer();
-			Roll();
+			CombatComponent->Attack();
 		}
-	}
-	else
+	//}
+	/**else
 	{
-		bool bLocal = FMath::RandBool();
-		if (bLocal)
-		{
-			Block();
-			if (bBlockedHit)
-			{
-				StopRoamingTimer();
-				Attack();
-			}
-			else
-			{
-				StartRoamingTimer();
-			}
-		}
-		else
-		{
-			StopRoamingTimer();
-			Attack();
-		}
-
-		//StopRoamingTimer();
-		//Attack();
-	}
+		StopRoamingTimer();
+		CombatComponent->Attack();
+	}**/
 }
 
 void ABossAI::CheckDistanceToPlayer()
@@ -165,16 +110,6 @@ void ABossAI::CheckDistanceToPlayer()
 	{
 		ApproachPlayer();
 	}
-}
-
-UAnimMontage * ABossAI::MontageToPlay()
-{
-	return AttackAnimations[MontageIndex];
-}
-
-void ABossAI::ClearTimer()
-{
-	GetWorldTimerManager().ClearTimer(TimerHandle_EventTimer);
 }
 
 void ABossAI::SpawnRoamingPoints()
@@ -254,17 +189,17 @@ void ABossAI::StartRoamingTimer()
 
 void ABossAI::StopRoamingTimer()
 {
-	if (GetWorldTimerManager().IsTimerActive(TimerHandle_EventTimer))
+	if (GetWorldTimerManager().IsTimerActive(CombatComponent->TimerHandle_EventTimer))
 	{
 		return;
 	}
 
-	if (GetWorldTimerManager().IsTimerActive(TimerHandle_MoveAroundPlayer))
+	if (GetWorldTimerManager().IsTimerActive(CombatComponent->TimerHandle_EventTimer))
 	{
 		if (FVector::Dist(GetActorLocation(), AIMoveToLocation) <= 50)
 		{
 			UE_LOG(LogTemp, Log, TEXT("StopRoamingTimer"));
-			GetWorldTimerManager().ClearTimer(TimerHandle_MoveAroundPlayer);
+			GetWorldTimerManager().ClearTimer(CombatComponent->TimerHandle_EventTimer);
 			return;
 		}
 		else
@@ -274,7 +209,7 @@ void ABossAI::StopRoamingTimer()
 	}
 
 	UE_LOG(LogTemp, Log, TEXT("StopRoamingTimer"));
-	GetWorldTimerManager().ClearTimer(TimerHandle_MoveAroundPlayer);
+	GetWorldTimerManager().ClearTimer(CombatComponent->TimerHandle_EventTimer);
 }
 
 // Called every frame
@@ -296,16 +231,14 @@ void ABossAI::Tick(float DeltaTime)
 
 void ABossAI::Damage(float Damage)
 {
-	UE_LOG(LogTemp, Log, TEXT("Damage done to BossAI"));
-	if (bIsBlocking)
+	if (CombatComponent->TakeDamage(Damage))
 	{
-		GetWorldTimerManager().SetTimer(TimerHandle_EventTimer, this, &ABossAI::ClearTimer, 0.1f, false, PlayAnimMontage(BlockingHitMontage));
-		bBlockedHit = true;
-		PlayerReference->HitWasBlocked();
-		CombatChoice();
+
 	}
 	else
 	{
-		Health = Health - Damage;
+		PlayerReference->HitWasBlocked();
+		CombatChoice();
 	}
+	
 }
