@@ -124,6 +124,7 @@ void UCombatComponent::BlockedHitDone()
 
 void UCombatComponent::ClearTimer()
 {
+	bIsAttacking = false;
 	GetWorld()->GetTimerManager().ClearTimer(TimerHandle_EventTimer);
 }
 

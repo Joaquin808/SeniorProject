@@ -137,6 +137,11 @@ void ABossAI::SpawnRoamingPoints()
 
 void ABossAI::MoveAroundPlayer()
 {
+	if (CombatComponent->bIsAttacking)
+	{
+		return;
+	}
+
 	int32 Rand = FMath::RandRange(0, 2);
 
 	TArray<AActor*> RoamingPoints;
