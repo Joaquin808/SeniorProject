@@ -21,6 +21,7 @@
 #include "Components/PointLightComponent.h"
 #include "AI/BossAI.h"
 #include "Components/CombatComponent.h"
+#include "Pickups/Pickup.h"
 
 //////////////////////////////////////////////////////////////////////////
 // AProjectCharacter
@@ -100,6 +101,9 @@ void AProjectCharacter::BeginPlay()
 			Stance = EStance::Combat;
 		}
 	}
+
+	FTimerHandle TimerHandle_CheckForPickups;
+	GetWorldTimerManager().SetTimer(TimerHandle_CheckForPickups, this, &AProjectCharacter::CheckForPickups, 0.1f, true);
 }
 
 void AProjectCharacter::Attack()
@@ -246,6 +250,27 @@ void AProjectCharacter::SonarCooldown()
 	if (bUsePointLight)
 	{
 		ReverseLight();
+	}
+}
+
+void AProjectCharacter::CheckForPickups()
+{
+	FHitResult HitResult;
+
+	FVector Start = FirstPersonCameraComponent->GetComponentLocation();
+	FVector End = Start + (FirstPersonCameraComponent->GetForwardVector() * LineTraceDistance);
+
+	FCollisionQueryParams QueryParams;
+	QueryParams.AddIgnoredActor(this);
+
+	if (GetWorld()->LineTraceSingleByChannel(HitResult, Start, End, ECollisionChannel::ECC_Visibility, QueryParams))
+	{
+		// for keys
+		auto Pickup = Cast<APickup>(HitResult.GetActor());
+		if (Pickup)
+		{
+			Inventory.Add(Pickup->Name, Pickup);
+		}
 	}
 }
 
