@@ -24,10 +24,6 @@ class AProjectCharacter : public ACharacter, public ICombatInterface
 
 protected:
 
-	/** Pawn mesh: 1st person view (arms; seen only by self) */
-	//UPROPERTY(VisibleDefaultsOnly, Category=Mesh)
-	//class USkeletalMeshComponent* Mesh1P;
-
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
 	class UCameraComponent* FirstPersonCameraComponent;
 
@@ -53,9 +49,6 @@ protected:
 
 	UPROPERTY(BlueprintReadOnly)
 	EStance Stance;
-
-	UPROPERTY(EditDefaultsOnly)
-	class UAnimMontage* AttackMontage;
 
 	UPROPERTY(EditDefaultsOnly)
 	int32 TraceDistance;
@@ -93,13 +86,7 @@ protected:
 	bool bUseLight;
 
 	UPROPERTY(EditDefaultsOnly)
-	UAnimMontage* BlockingMontage;
-
-	UPROPERTY(EditDefaultsOnly)
-	float MaxHealth;
-
-	UPROPERTY(EditDefaultsOnly)
-	UAnimMontage* BlockingHitMontage;
+	bool bUseOverheadLight;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
 	bool bUsePointLight;
@@ -109,9 +96,6 @@ protected:
 
 	UPROPERTY(EditDefaultsOnly)
 	float PointLightRadius;
-
-    UPROPERTY(EditDefaultsOnly)
-    float StunnedDuration;
 
 	UPROPERTY(BlueprintReadWrite)
 	bool bAbilityIsActive;
@@ -137,11 +121,10 @@ public:
 	UPROPERTY(BlueprintReadOnly)
 	bool bIsBlocking;
 
-	float Health;
-
-	bool bIsAttacking;
-
     class ABossAI* BossAIReference;
+
+	UPROPERTY(EditDefaultsOnly)
+	bool bDebugMode;
 
 protected:
 
@@ -166,6 +149,9 @@ protected:
 
 	UFUNCTION(BlueprintImplementableEvent)
 	void ReverseLight();
+
+	UFUNCTION(BlueprintCallable)
+	void CheckLightDistanceToAI(float LightRadius);
 
 	void CheckForPickups();
 

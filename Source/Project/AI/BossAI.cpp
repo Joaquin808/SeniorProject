@@ -101,13 +101,25 @@ void ABossAI::CombatChoice()
 void ABossAI::CheckDistanceToPlayer()
 {
 	//UE_LOG(LogTemp, Log, TEXT("Check Distance to Player"));
-	if ((GetActorLocation() - PlayerReference->GetActorLocation()).Size() <= DistanceToPlayerThreshold && !bIsAttacking)
+	if ((GetActorLocation() - PlayerReference->GetActorLocation()).Size() <= DistanceToPlayerThreshold)// && !CombatComponent->bIsAttacking)
 	{
 		//UE_LOG(LogTemp, Log, TEXT("Within distance"));
+		if (!PlayerReference->bDebugMode)
+		{
+			SetActorHiddenInGame(false);
+			Weapon->SetActorHiddenInGame(false);
+		}
+		
 		CombatChoice();
 	}
 	else
 	{
+		if (!PlayerReference->bDebugMode)
+		{
+			SetActorHiddenInGame(true);
+			Weapon->SetActorHiddenInGame(true);
+		}
+
 		ApproachPlayer();
 	}
 }

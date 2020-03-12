@@ -196,7 +196,7 @@ void AProjectCharacter::Ability()
 		}
 	}
 
-	if (bUseLight)
+	if (bUseOverheadLight)
 	{
 		FActorSpawnParameters SpawnParams;
 		SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
@@ -207,27 +207,6 @@ void AProjectCharacter::Ability()
 	{
 		ExpandLight();
 	}
-}
-
-void AProjectCharacter::DoCrouch()
-{
-	if (bIsCrouched)
-	{
-		UnCrouch();
-		bIsCrouched = false;
-		//FirstPersonCameraComponent->SetRelativeLocation(FVector(39.5600014, 1.75, 64.0));
-	}
-	else
-	{
-		Crouch();
-		bIsCrouched = true;
-		//FirstPersonCameraComponent->SetRelativeLocation(FVector(39.5600014, 1.75, 32.0));
-	}
-}
-
-void AProjectCharacter::Dodge()
-{
-	
 }
 
 void AProjectCharacter::SonarCooldown()
@@ -251,6 +230,48 @@ void AProjectCharacter::SonarCooldown()
 	{
 		ReverseLight();
 	}
+}
+
+void AProjectCharacter::CheckLightDistanceToAI(float LightRadius)
+{
+	if (!bDebugMode)
+	{
+		if (BossAIReference)
+		{
+			float DistToAI = FVector::Dist(GetActorLocation(), BossAIReference->GetActorLocation());
+			if (DistToAI <= LightRadius)
+			{
+				BossAIReference->SetActorHiddenInGame(false);
+				BossAIReference->Weapon->SetActorHiddenInGame(false);
+			}
+			else
+			{
+				BossAIReference->SetActorHiddenInGame(true);
+				BossAIReference->Weapon->SetActorHiddenInGame(true);
+			}
+		}
+	}
+}
+
+void AProjectCharacter::DoCrouch()
+{
+	if (bIsCrouched)
+	{
+		UnCrouch();
+		bIsCrouched = false;
+		//FirstPersonCameraComponent->SetRelativeLocation(FVector(39.5600014, 1.75, 64.0));
+	}
+	else
+	{
+		Crouch();
+		bIsCrouched = true;
+		//FirstPersonCameraComponent->SetRelativeLocation(FVector(39.5600014, 1.75, 32.0));
+	}
+}
+
+void AProjectCharacter::Dodge()
+{
+	
 }
 
 void AProjectCharacter::CheckForPickups()

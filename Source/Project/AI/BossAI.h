@@ -14,44 +14,16 @@ class PROJECT_API ABossAI : public ACharacter, public ICombatInterface
 
 protected:
 
-	UPROPERTY(BlueprintReadOnly)
-	class ASword* Weapon;
-
 	UPROPERTY(EditDefaultsOnly)
-	TSubclassOf<ASword> WeaponClass;
+	TSubclassOf<class ASword> WeaponClass;
 
 	UPROPERTY(VisibleAnywhere)
 	class UCombatComponent* CombatComponent;
-
-	bool bIsBlocking;
-
-	UPROPERTY(EditDefaultsOnly)
-	UAnimMontage* BlockingMontage;
-
-	UPROPERTY(EditDefaultsOnly)
-	UAnimMontage* BlockingHitMontage;
-
-	UPROPERTY(EditDefaultsOnly)
-	UAnimMontage* AttackMontage;
-
-	UPROPERTY(EditDefaultsOnly)
-	TArray<UAnimMontage*> AttackAnimations;
-
-	float Health;
-
-	UPROPERTY(EditDefaultsOnly)
-	float MaxHealth;
 
 	class AProjectCharacter* PlayerReference;
 
 	UPROPERTY(EditDefaultsOnly)
 	float DistanceToPlayerThreshold;
-
-	bool bIsAttacking;
-
-	bool bBlockedHit;
-
-	int32 MontageIndex;
 
 	FTimerHandle TimerHandle_EventTimer;
 
@@ -80,11 +52,12 @@ protected:
     UPROPERTY(EditDefaultsOnly)
     float StunnedDuration;
 
-    bool bHitWasBlocked;
-
 public:
 	// Sets default values for this character's properties
 	ABossAI();
+
+	UPROPERTY(BlueprintReadOnly)
+	class ASword* Weapon;
 
 protected:
 	// Called when the game starts or when spawned
@@ -111,9 +84,5 @@ public:
 	virtual void Tick(float DeltaTime) override;
 
 	virtual void Damage(float Damage) override;
-
-	void HitWasBlocked();
-
-    void BlockedHitDone();
 
 };
