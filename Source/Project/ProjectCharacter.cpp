@@ -187,6 +187,7 @@ void AProjectCharacter::Ability()
 				auto Object = Cast<AEnvironmentalObjects>(HitResults[i].GetActor());
 				if (Object)
 				{
+					Object->PlayerReference = this;
 					Object->EnableOutlineEffect();
 					RenderedObjects.Add(Object);
 					UE_LOG(LogTemp, Log, TEXT("Hit an object"));
@@ -221,6 +222,7 @@ void AProjectCharacter::SonarCooldown()
 
 	for (auto Object : RenderedObjects)
 	{
+		Object->PlayerReference = this;
 		Object->RemoveOutlineEffect();
 	}
 
@@ -306,6 +308,7 @@ void AProjectCharacter::OnOverlapBegin(UPrimitiveComponent * OverlappedComp, AAc
 	auto Object = Cast<AEnvironmentalObjects>(OtherActor);
 	if (Object && !Object->bIsOutlined)
 	{
+		Object->PlayerReference = this;
 		Object->bWasRanInto = true;
 		Object->EnableOutlineEffect();
 	}
@@ -316,6 +319,7 @@ void AProjectCharacter::OnOverlapEnd(UPrimitiveComponent * OverlappedComp, AActo
 	auto Object = Cast<AEnvironmentalObjects>(OtherActor);
 	if (Object && Object->bWasRanInto)
 	{
+		Object->PlayerReference = this;
 		Object->bWasRanInto = false;
 		Object->RemoveOutlineEffect();
 	}

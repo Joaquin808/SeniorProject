@@ -33,6 +33,11 @@ public:
 
 	bool bWasRanInto;
 
+	UPROPERTY(EditAnywhere)
+	bool bIsAWall;
+
+	class AProjectCharacter* PlayerReference;
+
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
