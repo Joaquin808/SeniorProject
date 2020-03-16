@@ -10,7 +10,15 @@ UCLASS()
 class PROJECT_API AEnvironmentalObjects : public AActor
 {
 	GENERATED_BODY()
+
+protected:
+
+	UPROPERTY(EditAnywhere)
+	int32 StencilValue;
 	
+	UPROPERTY(EditAnywhere)
+	bool bAlwaysOutlined;
+
 public:	
 	// Sets default values for this actor's properties
 	AEnvironmentalObjects();
@@ -21,12 +29,18 @@ public:
 	UPROPERTY(VisibleAnywhere)
 	class UBoxComponent* CollisionComp;
 
+	bool bIsOutlined;
+
+	bool bWasRanInto;
+
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 
 public:	
-	// Called every frame
-	virtual void Tick(float DeltaTime) override;
+
+	void EnableOutlineEffect();
+
+	void RemoveOutlineEffect();
 
 };

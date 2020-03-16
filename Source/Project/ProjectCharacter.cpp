@@ -187,10 +187,16 @@ void AProjectCharacter::Ability()
 				auto Object = Cast<AEnvironmentalObjects>(HitResults[i].GetActor());
 				if (Object)
 				{
-					Object->StaticMesh->SetRenderCustomDepth(true);
-					Object->StaticMesh->SetCustomDepthStencilValue(2);
+					Object->EnableOutlineEffect();
 					RenderedObjects.Add(Object);
 					UE_LOG(LogTemp, Log, TEXT("Hit an object"));
+				}
+
+				auto Enemy = Cast<ABossAI>(HitResults[i].GetActor());
+				if (Enemy)
+				{
+					Enemy->GetMesh()->SetRenderCustomDepth(true);
+					Enemy->GetMesh()->SetCustomDepthStencilValue(2);
 				}
 			}
 		}
@@ -215,8 +221,7 @@ void AProjectCharacter::SonarCooldown()
 
 	for (auto Object : RenderedObjects)
 	{
-		Object->StaticMesh->SetRenderCustomDepth(false);
-		Object->StaticMesh->SetCustomDepthStencilValue(0);
+		Object->RemoveOutlineEffect();
 	}
 
 	RenderedObjects.Empty();
@@ -299,20 +304,20 @@ void AProjectCharacter::OnOverlapBegin(UPrimitiveComponent * OverlappedComp, AAc
 {
 	// if I run into an enironment object, outline it to let the player know that they hit something since they can't see
 	auto Object = Cast<AEnvironmentalObjects>(OtherActor);
-	if (Object)
+	if (Object && !Object->bIsOutlined)
 	{
-		Object->StaticMesh->SetRenderCustomDepth(true);
-		Object->StaticMesh->SetCustomDepthStencilValue(2);
+		Object->bWasRanInto = true;
+		Object->EnableOutlineEffect();
 	}
 }
 
 void AProjectCharacter::OnOverlapEnd(UPrimitiveComponent * OverlappedComp, AActor * OtherActor, UPrimitiveComponent * OtherComp, int32 OtherBodyIndex)
 {
 	auto Object = Cast<AEnvironmentalObjects>(OtherActor);
-	if (Object)
+	if (Object && Object->bWasRanInto)
 	{
-		Object->StaticMesh->SetRenderCustomDepth(false);
-		Object->StaticMesh->SetCustomDepthStencilValue(0);
+		Object->bWasRanInto = false;
+		Object->RemoveOutlineEffect();
 	}
 }
 
