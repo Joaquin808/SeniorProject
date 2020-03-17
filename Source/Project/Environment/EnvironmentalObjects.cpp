@@ -27,6 +27,11 @@ void AEnvironmentalObjects::BeginPlay()
 	{
 		EnableOutlineEffect();
 	}
+
+	if (bIsToy)
+	{
+		StaticMesh->SetSimulatePhysics(true);
+	}
 }
 
 void AEnvironmentalObjects::EnableOutlineEffect()

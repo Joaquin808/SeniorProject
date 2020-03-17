@@ -19,6 +19,9 @@ protected:
 	UPROPERTY(EditAnywhere)
 	bool bAlwaysOutlined;
 
+	UPROPERTY(EditAnywhere)
+	bool bIsToy;
+
 public:	
 	// Sets default values for this actor's properties
 	AEnvironmentalObjects();
