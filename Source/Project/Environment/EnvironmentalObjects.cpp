@@ -33,7 +33,7 @@ void AEnvironmentalObjects::EnableOutlineEffect()
 {
 	if (!bIsOutlined)
 	{
-		if (PlayerReference && PlayerReference->bDebugMode && bIsAWall)
+		if (PlayerReference && PlayerReference->bDebugMode && bIsWall)
 		{
 			return;
 		}
@@ -66,7 +66,7 @@ void AEnvironmentalObjects::RemoveOutlineEffect()
 {
 	if (!bAlwaysOutlined && !bWasRanInto)
 	{
-		if (PlayerReference && PlayerReference->bDebugMode && bIsAWall)
+		if (PlayerReference && PlayerReference->bDebugMode && bIsWall)
 		{
 			return;
 		}

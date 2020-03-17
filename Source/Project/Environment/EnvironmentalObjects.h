@@ -34,7 +34,7 @@ public:
 	bool bWasRanInto;
 
 	UPROPERTY(EditAnywhere)
-	bool bIsAWall;
+	bool bIsWall;
 
 	class AProjectCharacter* PlayerReference;
 
