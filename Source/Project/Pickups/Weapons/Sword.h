@@ -18,9 +18,6 @@ protected:
 	ASword();
 
 	UPROPERTY(VisibleAnywhere)
-	UStaticMeshComponent* SwordMesh;
-
-	UPROPERTY(VisibleAnywhere)
 	UBoxComponent* CollisionBox;
 
 	UPROPERTY(VisibleAnywhere)
@@ -54,6 +51,11 @@ protected:
 
 	UPROPERTY(EditDefaultsOnly)
 	bool bDrawDebugLines;
+
+public:
+
+	UPROPERTY(VisibleAnywhere)
+	UStaticMeshComponent* SwordMesh;
 
 protected:
 

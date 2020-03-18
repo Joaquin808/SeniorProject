@@ -85,4 +85,8 @@ public:
 
 	virtual void Damage(float Damage) override;
 
+	void EnableOutlineEffect();
+
+	void DisableOutlineEffect();
+
 };

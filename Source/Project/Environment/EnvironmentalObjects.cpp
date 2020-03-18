@@ -3,6 +3,7 @@
 #include "Components/StaticMeshComponent.h"
 #include "Components/BoxComponent.h"
 #include "ProjectCharacter.h"
+#include "Components/SkeletalMeshComponent.h"
 
 // Sets default values
 AEnvironmentalObjects::AEnvironmentalObjects()
@@ -60,6 +61,16 @@ void AEnvironmentalObjects::EnableOutlineEffect()
 					Mesh->SetRenderCustomDepth(true);
 					Mesh->SetCustomDepthStencilValue(StencilValue);
 				}
+				else
+				{
+					// the garage door is a skeletal mesh, so i have to check for that
+					USkeletalMeshComponent* SKMesh = Cast<USkeletalMeshComponent>(Children[i]);
+					if (SKMesh)
+					{
+						SKMesh->SetRenderCustomDepth(true);
+						SKMesh->SetCustomDepthStencilValue(StencilValue);
+					}
+				}
 			}
 		}
 
@@ -90,6 +101,15 @@ void AEnvironmentalObjects::RemoveOutlineEffect()
 				{
 					Mesh->SetRenderCustomDepth(false);
 					Mesh->SetCustomDepthStencilValue(0);
+				}
+				else
+				{
+					USkeletalMeshComponent* SKMesh = Cast<USkeletalMeshComponent>(Children[i]);
+					if (SKMesh)
+					{
+						SKMesh->SetRenderCustomDepth(false);
+						SKMesh->SetCustomDepthStencilValue(0);
+					}
 				}
 			}
 		}

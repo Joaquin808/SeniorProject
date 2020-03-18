@@ -259,3 +259,21 @@ void ABossAI::Damage(float Damage)
 	}
 	
 }
+
+void ABossAI::EnableOutlineEffect()
+{
+	GetMesh()->SetRenderCustomDepth(true);
+	GetMesh()->SetCustomDepthStencilValue(2);
+
+	Weapon->SwordMesh->SetRenderCustomDepth(true);
+	Weapon->SwordMesh->SetCustomDepthStencilValue(2);
+}
+
+void ABossAI::DisableOutlineEffect()
+{
+	GetMesh()->SetRenderCustomDepth(false);
+	GetMesh()->SetCustomDepthStencilValue(0);
+
+	Weapon->SwordMesh->SetRenderCustomDepth(false);
+	Weapon->SwordMesh->SetCustomDepthStencilValue(0);
+}

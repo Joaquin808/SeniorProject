@@ -181,7 +181,7 @@ void AProjectCharacter::Ability()
 		DrawDebugSphere(GetWorld(), End, SphereRadius, 100, FColor::Red, false, 1.0f);
 		if (GetWorld()->SweepMultiByChannel(HitResults, Start, End, FQuat::Identity, ECC_WorldDynamic, Sphere, QueryParams))
 		{
-			UE_LOG(LogTemp, Log, TEXT("Hit something"));
+			//UE_LOG(LogTemp, Log, TEXT("Hit something"));
 			for (int32 i = 0; i < HitResults.Num(); i++)
 			{
 				auto Object = Cast<AEnvironmentalObjects>(HitResults[i].GetActor());
@@ -190,14 +190,13 @@ void AProjectCharacter::Ability()
 					Object->PlayerReference = this;
 					Object->EnableOutlineEffect();
 					RenderedObjects.Add(Object);
-					UE_LOG(LogTemp, Log, TEXT("Hit an object"));
+					//UE_LOG(LogTemp, Log, TEXT("Hit an object"));
 				}
 
 				auto Enemy = Cast<ABossAI>(HitResults[i].GetActor());
-				if (Enemy)
+				if (BossAIReference && BossAIReference == Enemy)
 				{
-					Enemy->GetMesh()->SetRenderCustomDepth(true);
-					Enemy->GetMesh()->SetCustomDepthStencilValue(2);
+					BossAIReference->EnableOutlineEffect();
 				}
 			}
 		}
@@ -220,13 +219,21 @@ void AProjectCharacter::SonarCooldown()
 {
 	GetWorldTimerManager().ClearTimer(TimerHandle_SonarCooldown);
 
-	for (auto Object : RenderedObjects)
+	if (bOutlineObjects)
 	{
-		Object->PlayerReference = this;
-		Object->RemoveOutlineEffect();
-	}
+		for (auto Object : RenderedObjects)
+		{
+			Object->PlayerReference = this;
+			Object->RemoveOutlineEffect();
+		}
 
-	RenderedObjects.Empty();
+		RenderedObjects.Empty();
+
+		if (BossAIReference)
+		{
+			BossAIReference->DisableOutlineEffect();
+		}
+	}
 
 	if (AbilityLight)
 	{
