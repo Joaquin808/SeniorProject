@@ -22,6 +22,8 @@ protected:
 	UPROPERTY(EditAnywhere)
 	bool bIsToy;
 
+	FCollisionResponseContainer DefaultCollisionRespones;
+
 public:	
 	// Sets default values for this actor's properties
 	AEnvironmentalObjects();
@@ -44,6 +46,7 @@ public:
 	UPROPERTY(EditAnywhere)
 	bool bIsDoor;
 
+	UPROPERTY(BlueprintReadOnly)
 	bool bDoorIsOpen;
 
 protected:
@@ -61,5 +64,13 @@ public:
 
 	UFUNCTION(BlueprintImplementableEvent)
 	void CloseDoor();
+
+	// whenever the door is open the player should be able to walk through
+	UFUNCTION(BlueprintCallable)
+	void DoorIsOpen();
+
+	// whenever the door is closed, the player shouldn't be allowed to just walk through the door
+	UFUNCTION(BlueprintCallable)
+	void DoorIsClosed();
 
 };

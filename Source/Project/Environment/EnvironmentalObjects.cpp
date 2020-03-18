@@ -33,6 +33,13 @@ void AEnvironmentalObjects::BeginPlay()
 	{
 		StaticMesh->SetSimulatePhysics(true);
 	}
+
+	// the defaults should only block the camera for the line tracing done in the player
+	DefaultCollisionRespones.SetAllChannels(ECollisionResponse::ECR_Overlap);
+	DefaultCollisionRespones.SetResponse(ECollisionChannel::ECC_Visibility, ECollisionResponse::ECR_Block);
+
+	// block all channels on BeginPlay because all doors will be shut at start
+	CollisionComp->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Block);
 }
 
 void AEnvironmentalObjects::EnableOutlineEffect()
@@ -116,5 +123,15 @@ void AEnvironmentalObjects::RemoveOutlineEffect()
 
 		bIsOutlined = false;
 	}
+}
+
+void AEnvironmentalObjects::DoorIsOpen()
+{
+	CollisionComp->SetCollisionResponseToChannels(DefaultCollisionRespones);
+}
+
+void AEnvironmentalObjects::DoorIsClosed()
+{
+	CollisionComp->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Block);
 }
 
