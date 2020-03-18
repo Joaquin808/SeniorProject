@@ -105,6 +105,8 @@ protected:
 	UPROPERTY(EditDefaultsOnly)
 	float LineTraceDistance;
 
+	class AEnvironmentalObjects* Door;
+
 public:
 
 	AProjectCharacter();
@@ -152,6 +154,14 @@ protected:
 
 	UFUNCTION(BlueprintCallable)
 	void CheckLightDistanceToAI(float LightRadius);
+
+	void CheckForInteractions();
+
+	void Interact();
+
+	void CheckForDoors();
+
+	void InteractWithDoor();
 
 	void CheckForPickups();
 

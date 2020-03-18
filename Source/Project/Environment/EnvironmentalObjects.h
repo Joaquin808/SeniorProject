@@ -41,6 +41,11 @@ public:
 
 	class AProjectCharacter* PlayerReference;
 
+	UPROPERTY(EditAnywhere)
+	bool bIsDoor;
+
+	bool bDoorIsOpen;
+
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
@@ -50,5 +55,11 @@ public:
 	void EnableOutlineEffect();
 
 	void RemoveOutlineEffect();
+
+	UFUNCTION(BlueprintImplementableEvent)
+	void OpenDoor();
+
+	UFUNCTION(BlueprintImplementableEvent)
+	void CloseDoor();
 
 };

@@ -102,8 +102,8 @@ void AProjectCharacter::BeginPlay()
 		}
 	}
 
-	FTimerHandle TimerHandle_CheckForPickups;
-	GetWorldTimerManager().SetTimer(TimerHandle_CheckForPickups, this, &AProjectCharacter::CheckForPickups, 0.1f, true);
+	FTimerHandle TimerHandle_CheckForInteractions;
+	GetWorldTimerManager().SetTimer(TimerHandle_CheckForInteractions, this, &AProjectCharacter::CheckForInteractions, 0.1f, true);
 }
 
 void AProjectCharacter::Attack()
@@ -267,25 +267,64 @@ void AProjectCharacter::CheckLightDistanceToAI(float LightRadius)
 	}
 }
 
-void AProjectCharacter::DoCrouch()
+void AProjectCharacter::CheckForInteractions()
 {
-	if (bIsCrouched)
+	CheckForDoors();
+	CheckForPickups();
+}
+
+void AProjectCharacter::Interact()
+{
+	InteractWithDoor();
+}
+
+void AProjectCharacter::CheckForDoors()
+{
+	FHitResult HitResult;
+
+	FVector Start = FirstPersonCameraComponent->GetComponentLocation();
+	FVector End = Start + (FirstPersonCameraComponent->GetForwardVector() * LineTraceDistance);
+
+	FCollisionQueryParams QueryParams;
+	QueryParams.AddIgnoredActor(this);
+
+	if (GetWorld()->LineTraceSingleByChannel(HitResult, Start, End, ECollisionChannel::ECC_Visibility, QueryParams))
 	{
-		UnCrouch();
-		bIsCrouched = false;
-		//FirstPersonCameraComponent->SetRelativeLocation(FVector(39.5600014, 1.75, 64.0));
+		auto Object = Cast<AEnvironmentalObjects>(HitResult.GetActor());
+		if (Object && Object->bIsDoor)
+		{
+			Door = Object;
+			Door->EnableOutlineEffect();
+			//UE_LOG(LogTemp, Log, TEXT("Door"));
+		}
 	}
 	else
 	{
-		Crouch();
-		bIsCrouched = true;
-		//FirstPersonCameraComponent->SetRelativeLocation(FVector(39.5600014, 1.75, 32.0));
+		if (Door)
+		{
+			Door->RemoveOutlineEffect();
+		}
+
+		Door = nullptr;
 	}
 }
 
-void AProjectCharacter::Dodge()
+void AProjectCharacter::InteractWithDoor()
 {
-	
+	if (Door)
+	{
+		switch (Door->bDoorIsOpen)
+		{
+		case true:
+			Door->CloseDoor();
+			Door->bDoorIsOpen = false;
+			break;
+		case false:
+			Door->OpenDoor();
+			Door->bDoorIsOpen = true;
+			break;
+		}
+	}
 }
 
 void AProjectCharacter::CheckForPickups()
@@ -307,6 +346,27 @@ void AProjectCharacter::CheckForPickups()
 			Inventory.Add(Pickup->Name, Pickup);
 		}
 	}
+}
+
+void AProjectCharacter::DoCrouch()
+{
+	if (bIsCrouched)
+	{
+		UnCrouch();
+		bIsCrouched = false;
+		//FirstPersonCameraComponent->SetRelativeLocation(FVector(39.5600014, 1.75, 64.0));
+	}
+	else
+	{
+		Crouch();
+		bIsCrouched = true;
+		//FirstPersonCameraComponent->SetRelativeLocation(FVector(39.5600014, 1.75, 32.0));
+	}
+}
+
+void AProjectCharacter::Dodge()
+{
+	
 }
 
 void AProjectCharacter::OnOverlapBegin(UPrimitiveComponent * OverlappedComp, AActor * OtherActor, UPrimitiveComponent * OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult & SweepResult)
@@ -347,6 +407,8 @@ void AProjectCharacter::SetupPlayerInputComponent(class UInputComponent* PlayerI
 	PlayerInputComponent->BindAction("Block", IE_Released, this, &AProjectCharacter::UnBlock);
 
 	PlayerInputComponent->BindAction("Ability", IE_Pressed, this, &AProjectCharacter::Ability);
+
+	PlayerInputComponent->BindAction("Interact", IE_Pressed, this, &AProjectCharacter::Interact);
 
 	PlayerInputComponent->BindAction("Crouch", IE_Pressed, this, &AProjectCharacter::DoCrouch);
 
