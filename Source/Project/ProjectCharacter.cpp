@@ -22,6 +22,8 @@
 #include "AI/BossAI.h"
 #include "Components/CombatComponent.h"
 #include "Pickups/Pickup.h"
+#include "AI/FollowAI.h"
+#include "Engine/Engine.h"
 
 //////////////////////////////////////////////////////////////////////////
 // AProjectCharacter
@@ -198,6 +200,12 @@ void AProjectCharacter::Ability()
 				{
 					BossAIReference->EnableOutlineEffect();
 				}
+
+				if (FollowAI && FollowAI == Cast<AFollowAI>(HitResults[i].GetActor()))
+				{
+					GEngine->AddOnScreenDebugMessage(-1, 1.0f, FColor::Blue, "FollowAI Exists, outline it");
+					FollowAI->OutlineAI(true);
+				}
 			}
 		}
 	}
@@ -232,6 +240,12 @@ void AProjectCharacter::SonarCooldown()
 		if (BossAIReference)
 		{
 			BossAIReference->DisableOutlineEffect();
+		}
+
+		if (FollowAI)
+		{
+			GEngine->AddOnScreenDebugMessage(-1, 1.0f, FColor::Blue, "FollowAI Exists, remove the outline");
+			FollowAI->OutlineAI(false);
 		}
 	}
 

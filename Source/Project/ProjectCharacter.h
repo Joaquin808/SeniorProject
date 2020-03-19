@@ -128,6 +128,8 @@ public:
 	UPROPERTY(EditDefaultsOnly)
 	bool bDebugMode;
 
+	class AFollowAI* FollowAI;
+
 protected:
 
 	virtual void BeginPlay();

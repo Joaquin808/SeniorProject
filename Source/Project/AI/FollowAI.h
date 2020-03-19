@@ -48,7 +48,15 @@ protected:
 	UPROPERTY(EditDefaultsOnly)
 	float ShowFootstepsDistance;
 
-	TArray<class AEnvironmentalObjects*> FootstepsArray;
+	UPROPERTY(VisibleAnywhere)
+	class USkeletalMeshComponent* FeetOutline;
+
+	class AProjectCharacter* PlayerReference;
+
+	UPROPERTY(EditDefaultsOnly)
+	int32 StencilValue;
+
+	bool bAIOutlined;
 
 public:
 	// Sets default values for this character's properties
@@ -68,6 +76,8 @@ protected:
 
 	void ShowFootsteps();
 
+	void OutlineFeet(bool bOutlineFeet);
+
 public:	
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
@@ -77,5 +87,7 @@ public:
 
 	UFUNCTION()
 	void OnHearPawn(APawn* OtherActor, const FVector& Location, float Volume);
+
+	void OutlineAI(bool bOutlineAI);
 
 };

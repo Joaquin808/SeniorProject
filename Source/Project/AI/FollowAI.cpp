@@ -9,6 +9,7 @@
 #include "Kismet/GameplayStatics.h"
 #include "Environment/EnvironmentalObjects.h"
 #include "Components/StaticMeshComponent.h"
+#include "Components/SkeletalMeshComponent.h"
 
 // Sets default values
 AFollowAI::AFollowAI()
@@ -19,7 +20,11 @@ AFollowAI::AFollowAI()
 	PawnSensingComp = CreateDefaultSubobject<UPawnSensingComponent>(TEXT("SensingComp"));
 	PawnSensingComp->OnSeePawn.AddDynamic(this, &AFollowAI::OnPawnSeen);
 	PawnSensingComp->OnHearNoise.AddDynamic(this, &AFollowAI::OnHearPawn);
+	
+	FeetOutline = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("FeetOutline"));
+	FeetOutline->SetupAttachment(GetMesh());
 
+	StencilValue = 2;
 }
 
 // Called when the game starts or when spawned
@@ -35,9 +40,22 @@ void AFollowAI::BeginPlay()
 	FTimerHandle TimerHandle_CheckNotMoving;
 	GetWorldTimerManager().SetTimer(TimerHandle_CheckNotMoving, this, &AFollowAI::CheckNotMoving, 1.0f, true);
 
-	// starts a timer to check to see how close the AI is to the player every second
-	FTimerHandle TimerHandle_ShowFootsteps;
-	GetWorldTimerManager().SetTimer(TimerHandle_ShowFootsteps, this, &AFollowAI::ShowFootsteps, 1.0f, true);
+	PlayerReference = Cast<AProjectCharacter>(UGameplayStatics::GetPlayerCharacter(this, 0));
+	PlayerReference->FollowAI = this;
+
+	// if I'm in debug mode then keep the AI's footsteps visible at all times
+	// else start a timer to check the distance between the AI and the player to display their footsteps
+	if (PlayerReference->bDebugMode)
+	{
+		FeetOutline->SetRenderCustomDepth(true);
+		FeetOutline->SetCustomDepthStencilValue(2);
+	}
+	else
+	{
+		// starts a timer to check to see how close the AI is to the player every second
+		FTimerHandle TimerHandle_ShowFootsteps;
+		GetWorldTimerManager().SetTimer(TimerHandle_ShowFootsteps, this, &AFollowAI::ShowFootsteps, 1.0f, true);
+	}
 }
 
 void AFollowAI::Patrol()
@@ -114,29 +132,52 @@ void AFollowAI::CheckLocation()
 void AFollowAI::ShowFootsteps()
 {
 	// if the AI is within a certain distance of the player, then turn on the outline of the footsteps, so the player has an idea of where the AI is
-	auto Player = Cast<AProjectCharacter>(UGameplayStatics::GetPlayerCharacter(this, 0));
-	if (FVector::Dist(GetActorLocation(), Player->GetActorLocation()) <= ShowFootstepsDistance)
+	if (FVector::Dist(GetActorLocation(), PlayerReference->GetActorLocation()) <= ShowFootstepsDistance)
 	{
-		TArray<AActor*> AttachedActors;
-		GetAttachedActors(AttachedActors);
-		for (auto Actor : AttachedActors)
+		if (bAIOutlined)
 		{
-			auto Footsteps = Cast<AEnvironmentalObjects>(Actor);
-			if (Footsteps)
-			{
-				Footsteps->StaticMesh->SetRenderCustomDepth(true);
-				Footsteps->StaticMesh->SetCustomDepthStencilValue(2);
-				FootstepsArray.AddUnique(Footsteps);
-			}
+			return;
 		}
+
+		OutlineFeet(true);
 	}
 	else
 	{
-		for (auto Footsteps : FootstepsArray)
-		{
-			Footsteps->StaticMesh->SetRenderCustomDepth(false);
-			Footsteps->StaticMesh->SetCustomDepthStencilValue(0);
-		}
+		OutlineFeet(false);
+	}
+}
+
+void AFollowAI::OutlineAI(bool bOutlineAI)
+{
+	switch (bOutlineAI)
+	{
+	case true:
+		GetMesh()->SetRenderCustomDepth(true);
+		GetMesh()->SetCustomDepthStencilValue(StencilValue);
+		if (!PlayerReference->bDebugMode)
+			OutlineFeet(false);
+		bAIOutlined = true;
+		break;
+	case false:
+		GetMesh()->SetRenderCustomDepth(false);
+		GetMesh()->SetCustomDepthStencilValue(0);
+		bAIOutlined = false;
+		break;
+	}
+}
+
+void AFollowAI::OutlineFeet(bool bOutlineFeet)
+{
+	switch (bOutlineFeet)
+	{
+	case true:
+		FeetOutline->SetRenderCustomDepth(true);
+		FeetOutline->SetCustomDepthStencilValue(StencilValue);
+		break;
+	case false:
+		FeetOutline->SetRenderCustomDepth(false);
+		FeetOutline->SetCustomDepthStencilValue(0);
+		break;
 	}
 }
 
