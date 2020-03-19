@@ -203,7 +203,6 @@ void AProjectCharacter::Ability()
 
 				if (FollowAI && FollowAI == Cast<AFollowAI>(HitResults[i].GetActor()))
 				{
-					GEngine->AddOnScreenDebugMessage(-1, 1.0f, FColor::Blue, "FollowAI Exists, outline it");
 					FollowAI->OutlineAI(true);
 				}
 			}
@@ -244,7 +243,6 @@ void AProjectCharacter::SonarCooldown()
 
 		if (FollowAI)
 		{
-			GEngine->AddOnScreenDebugMessage(-1, 1.0f, FColor::Blue, "FollowAI Exists, remove the outline");
 			FollowAI->OutlineAI(false);
 		}
 	}

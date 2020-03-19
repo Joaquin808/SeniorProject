@@ -27,6 +27,9 @@ protected:
 	UPROPERTY(VisibleAnywhere)
 	UStaticMeshComponent* Point2;
 
+	UPROPERTY(VisibleAnywhere)
+	class UBoxComponent* RoomBox;
+
 	FVector Point1Location;
 
 	FVector Point2Location;
@@ -38,6 +41,19 @@ protected:
 
 	UPROPERTY(EditAnywhere)
 	float OverlapTimer;
+
+	bool bPlayerIsInRoom;
+
+	class AProjectCharacter* PlayerReference;
+
+	FVector TeleportLocation;
+
+	class AFollowAI* AI;
+
+	UPROPERTY(EditAnywhere)
+	float TeleportLerpTime;
+
+	bool bAIIsInRoom;
 	
 public:	
 	// Sets default values for this actor's properties
@@ -51,13 +67,16 @@ protected:
 
 public:	
 
-	// Called every frame
-	virtual void Tick(float DeltaTime) override;
-
 	UFUNCTION()
 	void OnOverlap1Begin(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
 
 	UFUNCTION()
 	void OnOverlap2Begin(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
+
+	UFUNCTION()
+	void OnOverlapBoxBegin(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
+
+	UFUNCTION()
+	void OnOverlapBoxEnd(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex);
 
 };
