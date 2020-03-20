@@ -107,6 +107,13 @@ protected:
 
 	class AEnvironmentalObjects* Door;
 
+	UPROPERTY(BlueprintReadOnly)
+	float FPS;
+
+	float DeltaTime;
+
+	FTimerHandle TimerHandle_FPSTimer;
+
 public:
 
 	AProjectCharacter();
@@ -167,6 +174,8 @@ protected:
 
 	void CheckForPickups();
 
+	void UpdateFPS();
+
 	UFUNCTION()
 	void OnOverlapBegin(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
 
@@ -182,6 +191,8 @@ protected:
 	virtual void SetupPlayerInputComponent(UInputComponent* InputComponent) override;
 
 public:
+
+	virtual void Tick(float DeltaTime) override;
 
 	virtual void Damage(float Damage) override;
 

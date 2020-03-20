@@ -30,6 +30,8 @@
 
 AProjectCharacter::AProjectCharacter()
 {
+	PrimaryActorTick.bCanEverTick = true;
+
 	// Set size for collision capsule
 	GetCapsuleComponent()->InitCapsuleSize(55.f, 96.0f);
 
@@ -402,6 +404,29 @@ void AProjectCharacter::OnOverlapEnd(UPrimitiveComponent * OverlappedComp, AActo
 		Object->bWasRanInto = false;
 		Object->RemoveOutlineEffect();
 	}
+}
+
+void AProjectCharacter::Tick(float DeltaTime)
+{
+	Super::Tick(DeltaTime);
+
+	if (GetWorldTimerManager().IsTimerActive(TimerHandle_FPSTimer))
+	{
+		return;
+	}
+
+	this->DeltaTime = DeltaTime;
+	GetWorldTimerManager().SetTimer(TimerHandle_FPSTimer, this, &AProjectCharacter::UpdateFPS, 1.0f, true);
+}
+
+void AProjectCharacter::UpdateFPS()
+{
+	// I've been experiencing some performance issues, so I want to keep track of my FPS
+	// I imagine i'll need to know my current FPS to alter how the game operates at certain times
+	FPS = 1.0f / DeltaTime;
+	GetWorldTimerManager().ClearTimer(TimerHandle_FPSTimer);
+	FString String = FString::SanitizeFloat(FPS);
+	GEngine->AddOnScreenDebugMessage(1, 0.5f, FColor::Blue, String);
 }
 
 void AProjectCharacter::SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent)
