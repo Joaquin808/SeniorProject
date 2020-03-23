@@ -49,6 +49,12 @@ public:
 	UPROPERTY(BlueprintReadOnly)
 	bool bDoorIsOpen;
 
+	UPROPERTY(EditAnywhere)
+	bool bIsDoorLocked;
+
+	UPROPERTY(EditAnywhere)
+	FString DoorKeyName;
+
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;

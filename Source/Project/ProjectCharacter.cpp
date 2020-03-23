@@ -24,6 +24,7 @@
 #include "Pickups/Pickup.h"
 #include "AI/FollowAI.h"
 #include "Engine/Engine.h"
+#include "Pickups/Keys/DoorKey.h"
 
 //////////////////////////////////////////////////////////////////////////
 // AProjectCharacter
@@ -334,8 +335,25 @@ void AProjectCharacter::InteractWithDoor()
 			Door->bDoorIsOpen = false;
 			break;
 		case false:
-			Door->OpenDoor();
-			Door->bDoorIsOpen = true;
+			// if the door is closed, check to see if it's unlocked 
+			// if the door is locked check to see if the player has the key to unlock the door, if they do unlock door and open it, if not do nothing
+			// I'll add a sound effect and a animation of a locked door trying to be opened
+			if (Door->bIsDoorLocked)
+			{
+				if (PlayerHasKeyForDoor(Door))
+				{
+					Door->bIsDoorLocked = false;
+					Door->OpenDoor();
+					Door->bDoorIsOpen = true;
+					GEngine->AddOnScreenDebugMessage(-1, 1.0f, FColor::Red, "Player has key");
+				}
+			}
+			else
+			{
+				Door->OpenDoor();
+				Door->bDoorIsOpen = true;
+			}
+
 			break;
 		}
 	}
@@ -343,23 +361,46 @@ void AProjectCharacter::InteractWithDoor()
 
 void AProjectCharacter::CheckForPickups()
 {
-	FHitResult HitResult;
+	TArray<FHitResult> HitResults;
 
 	FVector Start = FirstPersonCameraComponent->GetComponentLocation();
 	FVector End = Start + (FirstPersonCameraComponent->GetForwardVector() * LineTraceDistance);
 
+	FCollisionShape Sphere = FCollisionShape::MakeSphere(KeySphereRadius);
+
 	FCollisionQueryParams QueryParams;
 	QueryParams.AddIgnoredActor(this);
 
-	if (GetWorld()->LineTraceSingleByChannel(HitResult, Start, End, ECollisionChannel::ECC_Visibility, QueryParams))
+	if (bDrawCheckForPickupsSphere)
+		DrawDebugSphere(GetWorld(), End, KeySphereRadius, 12, FColor::Purple, false, 1.0f);
+	if (GetWorld()->SweepMultiByChannel(HitResults, Start, End, FQuat::Identity, ECollisionChannel::ECC_Visibility, Sphere, QueryParams))
 	{
 		// for keys
-		auto Pickup = Cast<APickup>(HitResult.GetActor());
-		if (Pickup)
+		for (int32 i = 0; i < HitResults.Num(); i++)
 		{
-			Inventory.Add(Pickup->Name, Pickup);
+			auto DoorKey = Cast<ADoorKey>(HitResults[i].GetActor());
+			if (DoorKey)
+			{
+				if (!PlayerHasItemInInventory(DoorKey))
+				{
+					DoorKey->EnableOutline();
+					Inventory.Add(DoorKey->Name, DoorKey);
+					DoorKey->Destroy();
+					GEngine->AddOnScreenDebugMessage(-1, 1.0f, FColor::Red, "Key added");
+				}
+			}
 		}
 	}
+}
+
+bool AProjectCharacter::PlayerHasKeyForDoor(AEnvironmentalObjects* Door)
+{
+	return Inventory.Contains(Door->DoorKeyName);
+}
+
+bool AProjectCharacter::PlayerHasItemInInventory(APickup* Item)
+{
+	return Inventory.Contains(Item->Name);
 }
 
 void AProjectCharacter::DoCrouch()
@@ -426,7 +467,8 @@ void AProjectCharacter::UpdateFPS()
 	FPS = 1.0f / DeltaTime;
 	GetWorldTimerManager().ClearTimer(TimerHandle_FPSTimer);
 	FString String = FString::SanitizeFloat(FPS);
-	GEngine->AddOnScreenDebugMessage(1, 0.5f, FColor::Blue, String);
+	if(bDebugMode)
+		GEngine->AddOnScreenDebugMessage(1, 0.5f, FColor::Blue, String);
 }
 
 void AProjectCharacter::SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent)

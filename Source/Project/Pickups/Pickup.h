@@ -15,6 +15,7 @@ public:
 	// Sets default values for this actor's properties
 	APickup();
 
+	UPROPERTY(EditAnywhere)
 	FString Name;
 
 protected:

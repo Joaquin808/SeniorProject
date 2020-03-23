@@ -114,6 +114,12 @@ protected:
 
 	FTimerHandle TimerHandle_FPSTimer;
 
+	UPROPERTY(EditDefaultsOnly)
+	float KeySphereRadius;
+
+	UPROPERTY(EditDefaultsOnly)
+	bool bDrawCheckForPickupsSphere;
+
 public:
 
 	AProjectCharacter();
@@ -173,6 +179,10 @@ protected:
 	void InteractWithDoor();
 
 	void CheckForPickups();
+
+	bool PlayerHasKeyForDoor(class AEnvironmentalObjects* Door);
+
+	bool PlayerHasItemInInventory(class APickup* Item);
 
 	void UpdateFPS();
 
