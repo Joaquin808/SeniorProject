@@ -291,6 +291,7 @@ void AProjectCharacter::CheckForInteractions()
 void AProjectCharacter::Interact()
 {
 	InteractWithDoor();
+	InteractWithPickups();
 }
 
 void AProjectCharacter::CheckForDoors()
@@ -381,14 +382,38 @@ void AProjectCharacter::CheckForPickups()
 			auto DoorKey = Cast<ADoorKey>(HitResults[i].GetActor());
 			if (DoorKey)
 			{
-				if (!PlayerHasItemInInventory(DoorKey))
-				{
-					DoorKey->EnableOutline();
-					Inventory.Add(DoorKey->Name, DoorKey);
-					DoorKey->Destroy();
-					GEngine->AddOnScreenDebugMessage(-1, 1.0f, FColor::Red, "Key added");
-				}
+				// if the object is already outlined and detected, no reason to continuing to outline it every time this function is called
+				if (FoundPickup)
+					return;
+				DoorKey->EnableOutline();
+				FoundPickup = DoorKey;
 			}
+			// if FoundPickup is not nullptr, then I want to disable the outline of that object if it is equal to a doorkey 
+			// and I'm currently not looking at it, then set it to nullptr afterwards
+			else if (FoundPickup)
+			{
+				if (FoundPickup == Cast<ADoorKey>(FoundPickup))
+				{
+					Cast<ADoorKey>(FoundPickup)->DisableOutline();
+				}
+
+				FoundPickup = nullptr;
+			}
+		}
+	}
+}
+
+void AProjectCharacter::InteractWithPickups()
+{
+	if (FoundPickup)
+	{
+		// if found pickup is not nullptr then check to see if it is already in the players inventory, if it's not then add it to the players inventory and destroy it
+		if (!PlayerHasItemInInventory(FoundPickup))
+		{
+			Inventory.Add(FoundPickup->Name, FoundPickup);
+			FoundPickup = nullptr;
+			FoundPickup->Destroy();
+			GEngine->AddOnScreenDebugMessage(-1, 1.0f, FColor::Red, "Key added");
 		}
 	}
 }

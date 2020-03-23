@@ -46,7 +46,7 @@ void AEnvironmentalObjects::EnableOutlineEffect()
 {
 	if (!bIsOutlined)
 	{
-		if (PlayerReference && PlayerReference->bDebugMode && bIsWall)
+		if (PlayerReference && !PlayerReference->bOutlineWalls && bIsWall)
 		{
 			return;
 		}

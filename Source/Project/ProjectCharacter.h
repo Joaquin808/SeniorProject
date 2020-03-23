@@ -120,6 +120,8 @@ protected:
 	UPROPERTY(EditDefaultsOnly)
 	bool bDrawCheckForPickupsSphere;
 
+	class APickup* FoundPickup;
+
 public:
 
 	AProjectCharacter();
@@ -137,6 +139,9 @@ public:
 	bool bIsBlocking;
 
     class ABossAI* BossAIReference;
+
+	UPROPERTY(EditDefaultsOnly)
+	bool bOutlineWalls;
 
 	UPROPERTY(EditDefaultsOnly)
 	bool bDebugMode;
@@ -179,6 +184,8 @@ protected:
 	void InteractWithDoor();
 
 	void CheckForPickups();
+
+	void InteractWithPickups();
 
 	bool PlayerHasKeyForDoor(class AEnvironmentalObjects* Door);
 
