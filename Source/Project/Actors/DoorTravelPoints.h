@@ -40,7 +40,7 @@ protected:
 	class AEnvironmentalObjects* Door;
 
 	UPROPERTY(EditAnywhere)
-	float OverlapTimer;
+	float DoorOpeningTimer;
 
 	bool bPlayerIsInRoom;
 
@@ -54,6 +54,8 @@ protected:
 	float TeleportLerpTime;
 
 	bool bAIIsInRoom;
+
+	FTimerHandle TimerHandle_DoorOpeningTimer;
 	
 public:	
 	// Sets default values for this actor's properties
@@ -63,7 +65,13 @@ protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 
-	void OverlapTimerEnd();
+	void CheckIfOverlapping();
+
+	void StartOverlapTimer();
+
+	void StopOverlapTimer();
+
+	void StopDoorOpeningTimer();
 
 public:	
 

@@ -60,7 +60,8 @@ void AFollowAI::BeginPlay()
 
 void AFollowAI::Patrol()
 {
-	UE_LOG(LogTemp, Log, TEXT("Patrol"));
+	if (bDebugMessages)
+		UE_LOG(LogTemp, Log, TEXT("Patrol"));
 	// change patrol radius and starting location based off whether or not the player was seen, but lost
 	switch (bLostPlayer)
 	{
@@ -96,7 +97,8 @@ void AFollowAI::CheckNotMoving()
 {
 	if (GetWorldTimerManager().IsTimerActive(TimerHandle_NotMoving))
 	{
-		UE_LOG(LogTemp, Log, TEXT("Timer is active"));
+		if (bDebugMessages)
+			UE_LOG(LogTemp, Log, TEXT("Timer is active"));
 		return;
 	}
 
@@ -104,9 +106,10 @@ void AFollowAI::CheckNotMoving()
 	{
 		// starts timer to see if the AI location has been within a certain distance for more than 3 seconds
 		// this issue was only happening after following the player, so only run this if they player has been seen
-		if (FVector::Dist(GetActorLocation(), PlayerLocation) < 50)
+		if (FVector::Dist(GetActorLocation(), PlayerLocation) < StopFollowDistance)
 		{
-			UE_LOG(LogTemp, Log, TEXT("Within distance"));
+			if (bDebugMessages)
+				UE_LOG(LogTemp, Log, TEXT("Within distance"));
 			AILocation = GetActorLocation();
 			GetWorldTimerManager().SetTimer(TimerHandle_NotMoving, this, &AFollowAI::CheckLocation, 0.01f, false, 3.0f);
 		}
@@ -115,7 +118,8 @@ void AFollowAI::CheckNotMoving()
 
 void AFollowAI::CheckLocation()
 {
-	UE_LOG(LogTemp, Log, TEXT("Check location"));
+	if (bDebugMessages)
+		UE_LOG(LogTemp, Log, TEXT("Check location"));
 	// if the AI has been in a similar location for more than 3 seconds, patrol again
 	if (FVector::Dist(GetActorLocation(), AILocation) <= 50)
 	{
@@ -125,7 +129,8 @@ void AFollowAI::CheckLocation()
 		bIsPatroling = true;
 		Patrol();
 		GetWorldTimerManager().ClearTimer(TimerHandle_NotMoving);
-		UE_LOG(LogTemp, Log, TEXT("Start patrol again"));
+		if (bDebugMessages)
+			UE_LOG(LogTemp, Log, TEXT("Start patrol again"));
 	}
 }
 
@@ -183,7 +188,8 @@ void AFollowAI::OutlineFeet(bool bOutlineFeet)
 
 void AFollowAI::OnPawnSeen(APawn* OtherActor)
 {
-	UE_LOG(LogTemp, Log, TEXT("OnPawnSeen"));
+	if (bDebugMessages)
+		UE_LOG(LogTemp, Log, TEXT("OnPawnSeen"));
 	auto Player = Cast<AProjectCharacter>(OtherActor);
 	if (Player)
 	{
@@ -201,7 +207,8 @@ void AFollowAI::OnPawnSeen(APawn* OtherActor)
 
 void AFollowAI::OnHearPawn(APawn* OtherActor, const FVector& Location, float Volume)
 {
-	UE_LOG(LogTemp, Log, TEXT("Heard something"));
+	if (bDebugMessages)
+		UE_LOG(LogTemp, Log, TEXT("Heard something"));
 	bIsPatroling = false;
 
 	FVector LookAtLocation = Location - GetActorLocation();

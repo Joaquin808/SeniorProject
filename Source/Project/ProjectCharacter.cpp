@@ -394,7 +394,8 @@ void AProjectCharacter::CheckForPickups()
 			{
 				if (FoundPickup == Cast<ADoorKey>(FoundPickup))
 				{
-					Cast<ADoorKey>(FoundPickup)->DisableOutline();
+					auto Key = Cast<ADoorKey>(FoundPickup);
+					Key->DisableOutline();
 				}
 
 				FoundPickup = nullptr;
@@ -411,8 +412,8 @@ void AProjectCharacter::InteractWithPickups()
 		if (!PlayerHasItemInInventory(FoundPickup))
 		{
 			Inventory.Add(FoundPickup->Name, FoundPickup);
-			FoundPickup = nullptr;
 			FoundPickup->Destroy();
+			FoundPickup = nullptr;
 			GEngine->AddOnScreenDebugMessage(-1, 1.0f, FColor::Red, "Key added");
 		}
 	}
@@ -531,7 +532,21 @@ void AProjectCharacter::MoveForward(float Value)
 	{
 		// add movement in that direction
 		AddMovementInput(GetActorForwardVector(), Value);
-		MakeNoise(1.0f, this, GetActorLocation(), 1000.0f);
+
+		// alter sound and range based on if the player is crouched or not
+		switch (bIsCrouched)
+		{
+		case true:
+			FootStepVolume = CrouchedFootStepVolume;
+			FootStepRange = CrouchedFootStepRange;
+			break;
+		case false:
+			FootStepVolume = WalkingFootStepVolume;
+			FootStepRange = WalkingFootStepRange;
+			break;
+		}
+
+		MakeNoise(FootStepVolume, this, GetActorLocation(), FootStepRange);
 	}
 }
 
@@ -541,6 +556,20 @@ void AProjectCharacter::MoveRight(float Value)
 	{
 		// add movement in that direction
 		AddMovementInput(GetActorRightVector(), Value);
-		MakeNoise(1.0f, this, GetActorLocation(), 1000.0f);
+
+		// alter sound and range based on if the player is crouched or not
+		switch (bIsCrouched)
+		{
+		case true:
+			FootStepVolume = CrouchedFootStepVolume;
+			FootStepRange = CrouchedFootStepRange;
+			break;
+		case false:
+			FootStepVolume = WalkingFootStepVolume;
+			FootStepRange = WalkingFootStepRange;
+			break;
+		}
+
+		MakeNoise(FootStepVolume, this, GetActorLocation(), FootStepRange);
 	}
 }

@@ -58,6 +58,13 @@ protected:
 
 	bool bAIOutlined;
 
+	// how close the AI needs to be to the player in order to stop following them/end game
+	UPROPERTY(EditDefaultsOnly)
+	float StopFollowDistance;
+
+	UPROPERTY(EditDefaultsOnly)
+	bool bDebugMessages;
+
 public:
 	// Sets default values for this character's properties
 	AFollowAI();

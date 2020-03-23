@@ -41,6 +41,22 @@ protected:
 
 	bool bIsCrouched;
 
+	float FootStepVolume;
+
+	float FootStepRange;
+
+	UPROPERTY(EditDefaultsOnly, meta = (ClampMin = "0.0", ClampMax = "1.0"))
+	float WalkingFootStepVolume;
+
+	UPROPERTY(EditDefaultsOnly)
+	float WalkingFootStepRange;
+
+	UPROPERTY(EditDefaultsOnly, meta = (ClampMin = "0.0", ClampMax = "1.0"))
+	float CrouchedFootStepVolume;
+
+	UPROPERTY(EditDefaultsOnly)
+	float CrouchedFootStepRange;
+
 	UPROPERTY(BlueprintReadOnly)
 	class ASword* Weapon;
 
