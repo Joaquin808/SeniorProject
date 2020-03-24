@@ -15,7 +15,7 @@
 AFollowAI::AFollowAI()
 {
  	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
-	PrimaryActorTick.bCanEverTick = true;
+	//PrimaryActorTick.bCanEverTick = true;
 
 	PawnSensingComp = CreateDefaultSubobject<UPawnSensingComponent>(TEXT("SensingComp"));
 	PawnSensingComp->OnSeePawn.AddDynamic(this, &AFollowAI::OnPawnSeen);
@@ -219,11 +219,4 @@ void AFollowAI::OnHearPawn(APawn* OtherActor, const FVector& Location, float Vol
 	NewLookAt.Roll = 0.0f;
 
 	SetActorRotation(NewLookAt);
-}
-
-// Called every frame
-void AFollowAI::Tick(float DeltaTime)
-{
-	Super::Tick(DeltaTime);
-
 }

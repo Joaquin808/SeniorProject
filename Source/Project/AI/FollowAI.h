@@ -86,8 +86,6 @@ protected:
 	void OutlineFeet(bool bOutlineFeet);
 
 public:	
-	// Called every frame
-	virtual void Tick(float DeltaTime) override;
 
 	UFUNCTION()
 	void OnPawnSeen(APawn* OtherActor);
