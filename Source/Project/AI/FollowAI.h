@@ -16,6 +16,9 @@ protected:
 	UPROPERTY(VisibleAnywhere, Category = "Components")
 	class UPawnSensingComponent* PawnSensingComp;
 
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
+	class UAudioComponent* FootstepAudioComp;
+
 	FVector PatrolStartLocation;
 
 	FVector AILocation;

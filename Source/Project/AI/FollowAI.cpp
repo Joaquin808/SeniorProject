@@ -10,6 +10,7 @@
 #include "Environment/EnvironmentalObjects.h"
 #include "Components/StaticMeshComponent.h"
 #include "Components/SkeletalMeshComponent.h"
+#include "Components/AudioComponent.h"
 
 // Sets default values
 AFollowAI::AFollowAI()
@@ -20,6 +21,8 @@ AFollowAI::AFollowAI()
 	PawnSensingComp = CreateDefaultSubobject<UPawnSensingComponent>(TEXT("SensingComp"));
 	PawnSensingComp->OnSeePawn.AddDynamic(this, &AFollowAI::OnPawnSeen);
 	PawnSensingComp->OnHearNoise.AddDynamic(this, &AFollowAI::OnHearPawn);
+
+	FootstepAudioComp = CreateDefaultSubobject<UAudioComponent>(TEXT("FootstepAudioComp"));
 	
 	FeetOutline = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("FeetOutline"));
 	FeetOutline->SetupAttachment(GetMesh());

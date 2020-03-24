@@ -20,6 +20,9 @@ protected:
 	UPROPERTY(VisibleAnywhere)
 	class UCombatComponent* CombatComponent;
 
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
+	class UAudioComponent* FootstepAudioComp;
+
 	class AProjectCharacter* PlayerReference;
 
 	UPROPERTY(EditDefaultsOnly)

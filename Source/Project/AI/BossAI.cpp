@@ -10,6 +10,7 @@
 #include "Actors/RoamingPoint.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Components/CombatComponent.h"
+#include "Components/AudioComponent.h"
 
 // Sets default values
 ABossAI::ABossAI()
@@ -18,6 +19,8 @@ ABossAI::ABossAI()
 	PrimaryActorTick.bCanEverTick = true;
 
 	CombatComponent = CreateDefaultSubobject<UCombatComponent>(TEXT("CombatComponent"));
+
+	FootstepAudioComp = CreateDefaultSubobject<UAudioComponent>(TEXT("FootstepAudioComp"));
 }
 
 // Called when the game starts or when spawned
