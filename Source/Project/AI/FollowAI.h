@@ -62,6 +62,18 @@ protected:
 	UPROPERTY(EditDefaultsOnly)
 	float StopFollowDistance;
 
+	float DefaultSightRadius;
+
+	UPROPERTY(EditDefaultsOnly)
+	float FollowSightRadius;
+
+	class AProjectCharacter* SeenPlayer;
+
+	FTimerHandle TimerHandle_SeenPlayerTimer;
+
+	UPROPERTY(EditDefaultsOnly)
+	float SeenPlayerTimerLength;
+
 	UPROPERTY(EditDefaultsOnly)
 	bool bDebugMessages;
 
@@ -84,6 +96,8 @@ protected:
 	void ShowFootsteps();
 
 	void OutlineFeet(bool bOutlineFeet);
+
+	void ClearSeenPlayerTimer();
 
 public:	
 

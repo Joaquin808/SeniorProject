@@ -41,11 +41,12 @@ void AFollowAI::BeginPlay()
 	GetWorldTimerManager().SetTimer(TimerHandle_CheckNotMoving, this, &AFollowAI::CheckNotMoving, 1.0f, true);
 
 	PlayerReference = Cast<AProjectCharacter>(UGameplayStatics::GetPlayerCharacter(this, 0));
-	PlayerReference->FollowAI = this;
+	if (PlayerReference)
+		PlayerReference->FollowAI = this;
 
 	// if I'm in debug mode then keep the AI's footsteps visible at all times
 	// else start a timer to check the distance between the AI and the player to display their footsteps
-	if (PlayerReference->bDebugMode)
+	if (PlayerReference && PlayerReference->bDebugMode)
 	{
 		FeetOutline->SetRenderCustomDepth(true);
 		FeetOutline->SetCustomDepthStencilValue(2);
@@ -56,6 +57,8 @@ void AFollowAI::BeginPlay()
 		FTimerHandle TimerHandle_ShowFootsteps;
 		GetWorldTimerManager().SetTimer(TimerHandle_ShowFootsteps, this, &AFollowAI::ShowFootsteps, 1.0f, true);
 	}
+
+	DefaultSightRadius = PawnSensingComp->SightRadius;
 }
 
 void AFollowAI::Patrol()
@@ -106,13 +109,8 @@ void AFollowAI::CheckNotMoving()
 	{
 		// starts timer to see if the AI location has been within a certain distance for more than 3 seconds
 		// this issue was only happening after following the player, so only run this if they player has been seen
-		if (FVector::Dist(GetActorLocation(), PlayerLocation) < StopFollowDistance)
-		{
-			if (bDebugMessages)
-				UE_LOG(LogTemp, Log, TEXT("Within distance"));
-			AILocation = GetActorLocation();
-			GetWorldTimerManager().SetTimer(TimerHandle_NotMoving, this, &AFollowAI::CheckLocation, 0.01f, false, 3.0f);
-		}
+		AILocation = GetActorLocation();
+		GetWorldTimerManager().SetTimer(TimerHandle_NotMoving, this, &AFollowAI::CheckLocation, 0.01f, false, 3.0f);
 	}
 }
 
@@ -186,21 +184,32 @@ void AFollowAI::OutlineFeet(bool bOutlineFeet)
 	}
 }
 
+void AFollowAI::ClearSeenPlayerTimer()
+{
+	if (SeenPlayer)
+		SeenPlayer = nullptr;
+	PawnSensingComp->SightRadius = DefaultSightRadius;
+	GetWorldTimerManager().ClearTimer(TimerHandle_SeenPlayerTimer);
+}
+
 void AFollowAI::OnPawnSeen(APawn* OtherActor)
 {
 	if (bDebugMessages)
 		UE_LOG(LogTemp, Log, TEXT("OnPawnSeen"));
-	auto Player = Cast<AProjectCharacter>(OtherActor);
-	if (Player)
+	SeenPlayer = Cast<AProjectCharacter>(OtherActor);
+	if (SeenPlayer)
 	{
 		// if the player has been seen by the AI, then the AI needs to chase after the player
 		// play sound effect to note detection
 		bIsPatroling = false;
 		bSawPlayer = true;
 		bLostPlayer = false;
-		PlayerLocation = Player->GetActorLocation();
-		// the AI speed needs to be slower than the player, so they have the ability to actually run away
+		PlayerLocation = SeenPlayer->GetActorLocation();
+		if (GetWorldTimerManager().IsTimerActive(TimerHandle_SeenPlayerTimer))
+			ClearSeenPlayerTimer();
+		GetWorldTimerManager().SetTimer(TimerHandle_SeenPlayerTimer, this, &AFollowAI::ClearSeenPlayerTimer, SeenPlayerTimerLength);
 		GetCharacterMovement()->MaxWalkSpeed = ChaseWalkSpeed;
+		PawnSensingComp->SightRadius = FollowSightRadius;
 		UAIBlueprintHelperLibrary::SimpleMoveToLocation(GetController(), PlayerLocation);
 	}
 }
@@ -219,4 +228,9 @@ void AFollowAI::OnHearPawn(APawn* OtherActor, const FVector& Location, float Vol
 	NewLookAt.Roll = 0.0f;
 
 	SetActorRotation(NewLookAt);
+
+	if (bLostPlayer)
+	{
+		UAIBlueprintHelperLibrary::SimpleMoveToLocation(GetController(), Location);
+	}
 }

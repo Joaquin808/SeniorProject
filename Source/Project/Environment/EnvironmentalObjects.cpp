@@ -34,9 +34,11 @@ void AEnvironmentalObjects::BeginPlay()
 		StaticMesh->SetSimulatePhysics(true);
 	}
 
-	// the defaults should only block the camera for the line tracing done in the player
+	// sets the collision response once the door is open
+	// I want to ignore the visibility and the camera for the collision box because it was preventing the AI from seeing the player when they entered a room
 	DefaultCollisionRespones.SetAllChannels(ECollisionResponse::ECR_Overlap);
-	DefaultCollisionRespones.SetResponse(ECollisionChannel::ECC_Visibility, ECollisionResponse::ECR_Block);
+	DefaultCollisionRespones.SetResponse(ECollisionChannel::ECC_Visibility, ECollisionResponse::ECR_Ignore);
+	DefaultCollisionRespones.SetResponse(ECollisionChannel::ECC_Camera, ECollisionResponse::ECR_Ignore);
 
 	// block all channels on BeginPlay because all doors will be shut at start
 	CollisionComp->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Block);
