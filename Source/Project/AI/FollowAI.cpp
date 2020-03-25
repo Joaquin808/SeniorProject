@@ -202,6 +202,22 @@ void AFollowAI::OnPawnSeen(APawn* OtherActor)
 	SeenPlayer = Cast<AProjectCharacter>(OtherActor);
 	if (SeenPlayer)
 	{
+		// if the player is hiding, ignore them and continue patroling around the current position
+		if (SeenPlayer->bIsHiding)
+		{
+			// if the FollowAI is already patroling while the player is hiding, then don't keep setting these things
+			if (bIsPatroling)
+			{
+				return;
+			}
+
+			bIsPatroling = true;
+			//bSawPlayer = true;
+			//bLostPlayer = true;
+			Patrol();
+			return;
+		}
+
 		// if the player has been seen by the AI, then the AI needs to chase after the player
 		// play sound effect to note detection
 		bIsPatroling = false;
@@ -221,7 +237,7 @@ void AFollowAI::OnHearPawn(APawn* OtherActor, const FVector& Location, float Vol
 {
 	if (bDebugMessages)
 		UE_LOG(LogTemp, Log, TEXT("Heard something"));
-	bIsPatroling = false;
+	//bIsPatroling = false;
 
 	FVector LookAtLocation = Location - GetActorLocation();
 	LookAtLocation.Normalize();

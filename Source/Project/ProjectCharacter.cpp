@@ -108,6 +108,8 @@ void AProjectCharacter::BeginPlay()
 
 	FTimerHandle TimerHandle_CheckForInteractions;
 	GetWorldTimerManager().SetTimer(TimerHandle_CheckForInteractions, this, &AProjectCharacter::CheckForInteractions, 0.1f, true);
+
+	PlayerController = Cast<APlayerController>(UGameplayStatics::GetPlayerController(this, 0));
 }
 
 void AProjectCharacter::Attack()
@@ -291,6 +293,8 @@ void AProjectCharacter::Interact()
 {
 	InteractWithDoor();
 	InteractWithPickups();
+	if (bIsHiding)
+		UnHide();
 }
 
 void AProjectCharacter::CheckForDoors()
@@ -502,6 +506,24 @@ void AProjectCharacter::UpdateFPS()
 	FString String = FString::SanitizeFloat(FPS);
 	if(bDebugMode)
 		GEngine->AddOnScreenDebugMessage(1, 0.5f, FColor::Blue, String);
+}
+
+void AProjectCharacter::Hide(AActor* NewViewTarget)
+{
+	if (PlayerController)
+	{
+		PlayerController->SetViewTargetWithBlend(NewViewTarget, 0.5f);
+		bIsHiding = true;
+	}
+}
+
+void AProjectCharacter::UnHide()
+{
+	if (PlayerController)
+	{
+		PlayerController->SetViewTargetWithBlend(this, 0.5f);
+		bIsHiding = false;
+	}
 }
 
 void AProjectCharacter::SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent)
