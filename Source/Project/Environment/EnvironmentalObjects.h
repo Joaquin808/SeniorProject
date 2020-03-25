@@ -6,12 +6,24 @@
 #include "GameFramework/Actor.h"
 #include "EnvironmentalObjects.generated.h"
 
+UENUM(BlueprintType)
+enum class EDoorType : uint8
+{
+	Open,
+	Closed,
+	Locked,
+	Unlock
+};
+
 UCLASS()
 class PROJECT_API AEnvironmentalObjects : public AActor
 {
 	GENERATED_BODY()
 
 protected:
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
+	class UAudioComponent* DoorAudioComp;
 
 	UPROPERTY(EditAnywhere)
 	int32 StencilValue;
@@ -78,5 +90,7 @@ public:
 	// whenever the door is closed, the player shouldn't be allowed to just walk through the door
 	UFUNCTION(BlueprintCallable)
 	void DoorIsClosed();
+
+	void PlayDoorSound(EDoorType DoorType);
 
 };

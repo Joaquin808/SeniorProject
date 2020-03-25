@@ -332,6 +332,7 @@ void AProjectCharacter::InteractWithDoor()
 		{
 		case true:
 			Door->CloseDoor();
+			Door->PlayDoorSound(EDoorType::Open);
 			Door->bDoorIsOpen = false;
 			break;
 		case false:
@@ -343,14 +344,21 @@ void AProjectCharacter::InteractWithDoor()
 				if (PlayerHasKeyForDoor(Door))
 				{
 					Door->bIsDoorLocked = false;
+					Door->PlayDoorSound(EDoorType::Unlock);
 					Door->OpenDoor();
+					Door->PlayDoorSound(EDoorType::Closed);
 					Door->bDoorIsOpen = true;
 					GEngine->AddOnScreenDebugMessage(-1, 1.0f, FColor::Red, "Player has key");
+				}
+				else
+				{
+					Door->PlayDoorSound(EDoorType::Locked);
 				}
 			}
 			else
 			{
 				Door->OpenDoor();
+				Door->PlayDoorSound(EDoorType::Closed);
 				Door->bDoorIsOpen = true;
 			}
 

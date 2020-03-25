@@ -4,6 +4,7 @@
 #include "Components/BoxComponent.h"
 #include "ProjectCharacter.h"
 #include "Components/SkeletalMeshComponent.h"
+#include "Components/AudioComponent.h"
 
 // Sets default values
 AEnvironmentalObjects::AEnvironmentalObjects()
@@ -15,6 +16,8 @@ AEnvironmentalObjects::AEnvironmentalObjects()
 
 	CollisionComp = CreateDefaultSubobject<UBoxComponent>(TEXT("CollisionComp"));
 	CollisionComp->SetupAttachment(StaticMesh);
+
+	DoorAudioComp = CreateDefaultSubobject<UAudioComponent>(TEXT("FootstepAudioComp"));
 
 	StencilValue = 2;
 }
@@ -135,5 +138,29 @@ void AEnvironmentalObjects::DoorIsOpen()
 void AEnvironmentalObjects::DoorIsClosed()
 {
 	CollisionComp->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Block);
+}
+
+void AEnvironmentalObjects::PlayDoorSound(EDoorType DoorType)
+{
+	int32 ParamNumber;
+
+	switch (DoorType)
+	{
+	case EDoorType::Open:
+		ParamNumber = 1;
+		break;
+	case EDoorType::Closed:
+		ParamNumber = 0;
+		break;
+	case EDoorType::Locked:
+		ParamNumber = 2;
+		break;
+	case EDoorType::Unlock:
+		ParamNumber = 3;
+		break;
+	}
+
+	DoorAudioComp->SetIntParameter(FName{ TEXT("Sound") }, ParamNumber);
+	DoorAudioComp->Play();
 }
 
