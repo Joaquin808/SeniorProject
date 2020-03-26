@@ -168,6 +168,10 @@ public:
 
 	bool bIsHiding;
 
+	bool bOverlappingHidingSpot;
+
+	AActor* HidingSpot;
+
 protected:
 
 	virtual void BeginPlay();
@@ -213,6 +217,12 @@ protected:
 
 	void UpdateFPS();
 
+	void InteractWithHidingSpot();
+
+	void Hide();
+
+	void UnHide();
+
 	UFUNCTION()
 	void OnOverlapBegin(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
 
@@ -236,10 +246,6 @@ public:
 	void HitWasBlocked();
 
 	void BlockedHitDone();
-
-	void Hide(AActor* NewViewTarget);
-
-	void UnHide();
 
 	/** Returns Mesh1P subobject **/
 	//FORCEINLINE class USkeletalMeshComponent* GetMesh1P() const { return Mesh1P; }

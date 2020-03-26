@@ -16,6 +16,7 @@ AHidingSpot::AHidingSpot()
 	BoxComp = CreateDefaultSubobject<UBoxComponent>(TEXT("BoxComp"));
 	BoxComp->SetupAttachment(DefaultRoot);
 	BoxComp->OnComponentBeginOverlap.AddDynamic(this, &AHidingSpot::OnOverlapBegin);
+	BoxComp->OnComponentEndOverlap.AddDynamic(this, &AHidingSpot::OnOverlapEnd);
 
 	CameraComp = CreateDefaultSubobject<UCameraComponent>(TEXT("CameraComp"));
 	CameraComp->SetupAttachment(DefaultRoot);
@@ -34,6 +35,19 @@ void AHidingSpot::OnOverlapBegin(UPrimitiveComponent* OverlappedComp, AActor* Ot
 	auto Player = Cast<AProjectCharacter>(OtherActor);
 	if (Player && !Player->bIsHiding)
 	{
-		Player->Hide(this);
+		if (Player->bOverlappingHidingSpot)
+			return;
+		Player->HidingSpot = this;
+		Player->bOverlappingHidingSpot = true;
+	}
+}
+
+void AHidingSpot::OnOverlapEnd(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex)
+{
+	auto Player = Cast<AProjectCharacter>(OtherActor);
+	if (Player)
+	{
+		Player->HidingSpot = nullptr;
+		Player->bOverlappingHidingSpot = false;
 	}
 }

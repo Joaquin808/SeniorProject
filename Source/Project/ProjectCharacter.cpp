@@ -293,8 +293,7 @@ void AProjectCharacter::Interact()
 {
 	InteractWithDoor();
 	InteractWithPickups();
-	if (bIsHiding)
-		UnHide();
+	InteractWithHidingSpot();
 }
 
 void AProjectCharacter::CheckForDoors()
@@ -508,11 +507,23 @@ void AProjectCharacter::UpdateFPS()
 		GEngine->AddOnScreenDebugMessage(1, 0.5f, FColor::Blue, String);
 }
 
-void AProjectCharacter::Hide(AActor* NewViewTarget)
+void AProjectCharacter::InteractWithHidingSpot()
 {
-	if (PlayerController)
+	if (bOverlappingHidingSpot && HidingSpot && !bIsHiding)
 	{
-		PlayerController->SetViewTargetWithBlend(NewViewTarget, 0.5f);
+		Hide();
+	}
+	else if (bIsHiding)
+	{
+		UnHide();
+	}
+}
+
+void AProjectCharacter::Hide()
+{
+	if (PlayerController && HidingSpot)
+	{
+		PlayerController->SetViewTargetWithBlend(HidingSpot, 0.5f);
 		bIsHiding = true;
 	}
 }
