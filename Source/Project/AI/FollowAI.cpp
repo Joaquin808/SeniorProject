@@ -27,7 +27,11 @@ AFollowAI::AFollowAI()
 	FeetOutline = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("FeetOutline"));
 	FeetOutline->SetupAttachment(GetMesh());
 
+	DetectionAudioComp = CreateDefaultSubobject<UAudioComponent>(TEXT("DetectionAudioComp"));
+
 	StencilValue = 2;
+
+	bPlayHearNoise = true;
 }
 
 // Called when the game starts or when spawned
@@ -113,6 +117,28 @@ FVector AFollowAI::PatrolPoint()
 	return CurrentPatrolPointLocation = PatrolPoints[CurrentPatrolIndex]->GetActorLocation();
 }
 
+// when we lose the player, we want the AI to patrol around the player within a certain radius to wait to see if the player comes out of hiding
+// before returning to their default patrol route
+void AFollowAI::PatrolAroundPlayer()
+{
+	UAIBlueprintHelperLibrary::SimpleMoveToLocation(GetController(), UNavigationSystemV1::GetRandomReachablePointInRadius(this, PlayerLocation, PatrolRadius));
+	GetWorldTimerManager().SetTimer(TimerHandle_PatrolAroundPlayer, this, &AFollowAI::PatrolAroundPlayerTimerEnd, FMath::RandRange(PatrolRandMin, PatrolRandMax), false);
+}
+
+void AFollowAI::PatrolAroundPlayerTimerEnd()
+{
+	GetWorldTimerManager().ClearTimer(TimerHandle_PatrolAroundPlayer);
+	// how many times do we want the AI to patrol around the players last seen position
+	if (PatrolAroundPlayerTick > MaxPatrolAroundPlayerTicks)
+	{
+		Patrol();
+		return;
+	}
+
+	PatrolAroundPlayer();
+	PatrolAroundPlayerTick++;
+}
+
 void AFollowAI::CheckNotMoving()
 {
 	if (GetWorldTimerManager().IsTimerActive(TimerHandle_NotMoving))
@@ -142,7 +168,8 @@ void AFollowAI::CheckLocation()
 		bSawPlayer = false;
 		bLostPlayer = true;
 		bIsPatroling = true;
-		Patrol();
+		//Patrol();
+		PatrolAroundPlayer();
 		GetWorldTimerManager().ClearTimer(TimerHandle_NotMoving);
 		if (bDebugMessages)
 			UE_LOG(LogTemp, Log, TEXT("Start patrol again"));
@@ -176,9 +203,14 @@ void AFollowAI::OnPawnSeen(APawn* OtherActor)
 			bIsPatroling = true;
 			//bSawPlayer = true;
 			//bLostPlayer = true;
-			Patrol();
+			//Patrol();
+			GetCharacterMovement()->MaxWalkSpeed = PatrolWalkSpeed;
+			PatrolAroundPlayer();
 			return;
 		}
+
+		// currently plays a heartbeat sound. I want this to contiuiously play as the AI is following the AI
+		PlaySeenDetectionNoise();
 
 		// if the player has been seen by the AI, then the AI needs to chase after the player
 		// play sound effect to note detection
@@ -203,6 +235,12 @@ void AFollowAI::OnHearPawn(APawn* OtherActor, const FVector& Location, float Vol
 	if (bDebugMessages)
 		UE_LOG(LogTemp, Log, TEXT("Heard something"));
 	bIsPatroling = false;
+	if (!bSawPlayer)
+		GetController()->StopMovement();
+
+	// Currently plays a fear sound when being heard. Only want this to play once until the AI is lost again
+	if (!DetectionAudioComp->IsPlaying() && bPlayHearNoise)
+		PlayHearDetectionNoise();
 
 	FVector LookAtLocation = Location - GetActorLocation();
 	LookAtLocation.Normalize();
@@ -217,6 +255,31 @@ void AFollowAI::OnHearPawn(APawn* OtherActor, const FVector& Location, float Vol
 	{
 		UAIBlueprintHelperLibrary::SimpleMoveToLocation(GetController(), Location);
 	}
+}
+
+void AFollowAI::PlaySeenDetectionNoise()
+{
+	DetectionAudioComp->SetBoolParameter(FName{ TEXT("Seen") }, true);
+	DetectionAudioComp->Play();
+}
+
+void AFollowAI::PlayHearDetectionNoise()
+{
+	if (GetWorldTimerManager().IsTimerActive(TimerHandle_HearNoiseTimer))
+	{
+		return;
+	}
+	
+	DetectionAudioComp->SetBoolParameter(FName{ TEXT("Seen") }, false);
+	DetectionAudioComp->Play();
+	bPlayHearNoise = false;
+	GetWorldTimerManager().SetTimer(TimerHandle_HearNoiseTimer, this, &AFollowAI::CanPlayHearNoiseAgain, HearNoiseTimerDuration);
+}
+
+void AFollowAI::CanPlayHearNoiseAgain()
+{
+	bPlayHearNoise = true;
+	GetWorldTimerManager().ClearTimer(TimerHandle_HearNoiseTimer);
 }
 
 void AFollowAI::ShowFootsteps()

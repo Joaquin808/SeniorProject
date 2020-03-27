@@ -19,8 +19,6 @@ protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
 	class UAudioComponent* FootstepAudioComp;
 
-	FVector PatrolStartLocation;
-
 	FVector AILocation;
 
 	FVector PlayerLocation;
@@ -77,6 +75,32 @@ protected:
 	FVector CurrentPatrolPointLocation;
 
 	UPROPERTY(EditDefaultsOnly)
+	float PatrolRadius;
+
+	FTimerHandle TimerHandle_PatrolAroundPlayer;
+
+	UPROPERTY(EditDefaultsOnly)
+	float PatrolRandMin;
+
+	UPROPERTY(EditDefaultsOnly)
+	float PatrolRandMax;
+
+	int32 PatrolAroundPlayerTick;
+
+	UPROPERTY(EditDefaultsOnly)
+	int32 MaxPatrolAroundPlayerTicks;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
+	class UAudioComponent* DetectionAudioComp;
+
+	bool bPlayHearNoise;
+
+	FTimerHandle TimerHandle_HearNoiseTimer;
+
+	UPROPERTY(EditDefaultsOnly)
+	float HearNoiseTimerDuration;
+
+	UPROPERTY(EditDefaultsOnly)
 	bool bDebugMessages;
 
 public:
@@ -95,9 +119,25 @@ protected:
 
 	FVector PatrolPoint();
 
+	void PatrolAroundPlayer();
+
+	void PatrolAroundPlayerTimerEnd();
+
 	void CheckNotMoving();
 
 	void CheckLocation();
+
+	UFUNCTION()
+	void OnPawnSeen(APawn* OtherActor);
+
+	UFUNCTION()
+	void OnHearPawn(APawn* OtherActor, const FVector& Location, float Volume);
+
+	void PlaySeenDetectionNoise();
+
+	void PlayHearDetectionNoise();
+
+	void CanPlayHearNoiseAgain();
 
 	void ShowFootsteps();
 
@@ -106,12 +146,6 @@ protected:
 	void ClearSeenPlayerTimer();
 
 public:	
-
-	UFUNCTION()
-	void OnPawnSeen(APawn* OtherActor);
-
-	UFUNCTION()
-	void OnHearPawn(APawn* OtherActor, const FVector& Location, float Volume);
 
 	void OutlineAI(bool bOutlineAI);
 
