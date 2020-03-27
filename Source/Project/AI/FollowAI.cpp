@@ -35,6 +35,9 @@ void AFollowAI::BeginPlay()
 {
 	Super::BeginPlay();
 
+	NbrOfPatrolPoints = PatrolPoints.Num() - 1;
+	CurrentPatrolIndex = 0;
+
 	AILocation = GetActorLocation();
 	bIsPatroling = true;
 	Patrol();
@@ -68,26 +71,20 @@ void AFollowAI::Patrol()
 {
 	if (bDebugMessages)
 		UE_LOG(LogTemp, Log, TEXT("Patrol"));
-	// change patrol radius and starting location based off whether or not the player was seen, but lost
-	switch (bLostPlayer)
-	{
-	case true:
-		PatrolRadius = DetectedPatrolRadius;
-		PatrolStartLocation = PlayerLocation;
-		break;
-	case false:
-		PatrolRadius = NonDetectedPatrolRadius;
-		PatrolStartLocation = AILocation;
-		break;
-	}
 
 	// want the AI to patrol very slowly rather than sprinting around
 	GetCharacterMovement()->MaxWalkSpeed = PatrolWalkSpeed;
-	UAIBlueprintHelperLibrary::SimpleMoveToLocation(GetController(), UNavigationSystemV1::GetRandomReachablePointInRadius(this, PatrolStartLocation, PatrolRadius));
+	UAIBlueprintHelperLibrary::SimpleMoveToLocation(GetController(), PatrolPoint());
 	if (bIsPatroling)
 	{
+		CurrentPatrolIndex++;
+		if (CurrentPatrolIndex > NbrOfPatrolPoints)
+		{
+			CurrentPatrolIndex = 0;
+		}
+
 		FTimerHandle TimerHandle_PatrolTimer;
-		GetWorldTimerManager().SetTimer(TimerHandle_PatrolTimer, this, &AFollowAI::PatrolTimerEnd, FMath::RandRange(1, 4), false);
+		GetWorldTimerManager().SetTimer(TimerHandle_PatrolTimer, this, &AFollowAI::PatrolTimerEnd, 3.0f, false);
 	}
 }
 
@@ -95,8 +92,25 @@ void AFollowAI::PatrolTimerEnd()
 {
 	if (bIsPatroling)
 	{
-		Patrol();
+		if (FVector::Dist(GetActorLocation(), CurrentPatrolPointLocation) <= 100.0f)
+		{
+			Patrol();
+			if (bDebugMessages)
+				UE_LOG(LogTemp, Log, TEXT("Close enough to point to transition"));
+		}
+		else
+		{
+			FTimerHandle TimerHandle_PatrolTimer;
+			GetWorldTimerManager().SetTimer(TimerHandle_PatrolTimer, this, &AFollowAI::PatrolTimerEnd, 0.5f, false);
+			if (bDebugMessages)
+				UE_LOG(LogTemp, Log, TEXT("Not close enough to point to transition"));
+		}
 	}
+}
+
+FVector AFollowAI::PatrolPoint()
+{
+	return CurrentPatrolPointLocation = PatrolPoints[CurrentPatrolIndex]->GetActorLocation();
 }
 
 void AFollowAI::CheckNotMoving()
@@ -132,6 +146,76 @@ void AFollowAI::CheckLocation()
 		GetWorldTimerManager().ClearTimer(TimerHandle_NotMoving);
 		if (bDebugMessages)
 			UE_LOG(LogTemp, Log, TEXT("Start patrol again"));
+	}
+}
+
+void AFollowAI::ClearSeenPlayerTimer()
+{
+	if (SeenPlayer)
+		SeenPlayer = nullptr;
+	PawnSensingComp->SightRadius = DefaultSightRadius;
+	GetWorldTimerManager().ClearTimer(TimerHandle_SeenPlayerTimer);
+}
+
+void AFollowAI::OnPawnSeen(APawn* OtherActor)
+{
+	if (bDebugMessages)
+		UE_LOG(LogTemp, Log, TEXT("OnPawnSeen"));
+	SeenPlayer = Cast<AProjectCharacter>(OtherActor);
+	if (SeenPlayer)
+	{
+		// if the player is hiding, ignore them and continue patroling around the current position
+		if (SeenPlayer->bIsHiding)
+		{
+			// if the FollowAI is already patroling while the player is hiding, then don't keep setting these things
+			if (bIsPatroling)
+			{
+				return;
+			}
+
+			bIsPatroling = true;
+			//bSawPlayer = true;
+			//bLostPlayer = true;
+			Patrol();
+			return;
+		}
+
+		// if the player has been seen by the AI, then the AI needs to chase after the player
+		// play sound effect to note detection
+		bIsPatroling = false;
+		bSawPlayer = true;
+		bLostPlayer = false;
+		PlayerLocation = SeenPlayer->GetActorLocation();
+		// Since there isn't a function for when the AI doesn't see any pawn or loses a pawn
+		// I want to start a timer that will make sure certain settings are being set back when the AI doesn't see the player anymore
+		// it'll be constantly reset every time the AI detects that they see the player
+		if (GetWorldTimerManager().IsTimerActive(TimerHandle_SeenPlayerTimer))
+			ClearSeenPlayerTimer();
+		GetWorldTimerManager().SetTimer(TimerHandle_SeenPlayerTimer, this, &AFollowAI::ClearSeenPlayerTimer, SeenPlayerTimerLength);
+		GetCharacterMovement()->MaxWalkSpeed = ChaseWalkSpeed;
+		PawnSensingComp->SightRadius = FollowSightRadius;
+		UAIBlueprintHelperLibrary::SimpleMoveToLocation(GetController(), PlayerLocation);
+	}
+}
+
+void AFollowAI::OnHearPawn(APawn* OtherActor, const FVector& Location, float Volume)
+{
+	if (bDebugMessages)
+		UE_LOG(LogTemp, Log, TEXT("Heard something"));
+	bIsPatroling = false;
+
+	FVector LookAtLocation = Location - GetActorLocation();
+	LookAtLocation.Normalize();
+
+	FRotator NewLookAt = FRotationMatrix::MakeFromX(LookAtLocation).Rotator();
+	NewLookAt.Pitch = 0.0f;
+	NewLookAt.Roll = 0.0f;
+
+	SetActorRotation(NewLookAt);
+
+	if (bLostPlayer)
+	{
+		UAIBlueprintHelperLibrary::SimpleMoveToLocation(GetController(), Location);
 	}
 }
 
@@ -184,72 +268,5 @@ void AFollowAI::OutlineFeet(bool bOutlineFeet)
 		FeetOutline->SetRenderCustomDepth(false);
 		FeetOutline->SetCustomDepthStencilValue(0);
 		break;
-	}
-}
-
-void AFollowAI::ClearSeenPlayerTimer()
-{
-	if (SeenPlayer)
-		SeenPlayer = nullptr;
-	PawnSensingComp->SightRadius = DefaultSightRadius;
-	GetWorldTimerManager().ClearTimer(TimerHandle_SeenPlayerTimer);
-}
-
-void AFollowAI::OnPawnSeen(APawn* OtherActor)
-{
-	if (bDebugMessages)
-		UE_LOG(LogTemp, Log, TEXT("OnPawnSeen"));
-	SeenPlayer = Cast<AProjectCharacter>(OtherActor);
-	if (SeenPlayer)
-	{
-		// if the player is hiding, ignore them and continue patroling around the current position
-		if (SeenPlayer->bIsHiding)
-		{
-			// if the FollowAI is already patroling while the player is hiding, then don't keep setting these things
-			if (bIsPatroling)
-			{
-				return;
-			}
-
-			bIsPatroling = true;
-			//bSawPlayer = true;
-			//bLostPlayer = true;
-			Patrol();
-			return;
-		}
-
-		// if the player has been seen by the AI, then the AI needs to chase after the player
-		// play sound effect to note detection
-		bIsPatroling = false;
-		bSawPlayer = true;
-		bLostPlayer = false;
-		PlayerLocation = SeenPlayer->GetActorLocation();
-		if (GetWorldTimerManager().IsTimerActive(TimerHandle_SeenPlayerTimer))
-			ClearSeenPlayerTimer();
-		GetWorldTimerManager().SetTimer(TimerHandle_SeenPlayerTimer, this, &AFollowAI::ClearSeenPlayerTimer, SeenPlayerTimerLength);
-		GetCharacterMovement()->MaxWalkSpeed = ChaseWalkSpeed;
-		PawnSensingComp->SightRadius = FollowSightRadius;
-		UAIBlueprintHelperLibrary::SimpleMoveToLocation(GetController(), PlayerLocation);
-	}
-}
-
-void AFollowAI::OnHearPawn(APawn* OtherActor, const FVector& Location, float Volume)
-{
-	if (bDebugMessages)
-		UE_LOG(LogTemp, Log, TEXT("Heard something"));
-	//bIsPatroling = false;
-
-	FVector LookAtLocation = Location - GetActorLocation();
-	LookAtLocation.Normalize();
-
-	FRotator NewLookAt = FRotationMatrix::MakeFromX(LookAtLocation).Rotator();
-	NewLookAt.Pitch = 0.0f;
-	NewLookAt.Roll = 0.0f;
-
-	SetActorRotation(NewLookAt);
-
-	if (bLostPlayer)
-	{
-		UAIBlueprintHelperLibrary::SimpleMoveToLocation(GetController(), Location);
 	}
 }

@@ -52,42 +52,26 @@ void ADoorTravelPoints::BeginPlay()
 
 void ADoorTravelPoints::CheckIfOverlapping()
 {
-	if (Point1Collider->IsOverlappingActor(AI))
+	if (AI && Point1Collider->IsOverlappingActor(AI))
 	{
 		UE_LOG(LogTemp, Log, TEXT("Overlapped point 1"));
 		// only teleport into the room if the player is in that room
-		if (Door && bPlayerIsInRoom && !bAIIsInRoom)
+		if (Door && bPlayerIsInRoom && !bAIIsInRoom && !bTravelingThroughDoor)
 		{
-			if (Door->bDoorIsOpen)
-			{
-				AI->SetActorLocation(Point2Location);
-			}
-			else
-			{
-				Door->OpenDoor();
-				TeleportLocation = Point2Location;
-			}
-
+			bTravelingThroughDoor = true;
+			EnterRoom(AI);
 			StopOverlapTimer();
 		}
 	}
 
-	if (Point2Collider->IsOverlappingActor(AI))
+	if (AI && Point2Collider->IsOverlappingActor(AI))
 	{
 		UE_LOG(LogTemp, Log, TEXT("Overlapped point 2"));
 		// only teleport into the room if the player is in that room
-		if (Door && !bPlayerIsInRoom && bAIIsInRoom)
+		if (Door && !bPlayerIsInRoom && bAIIsInRoom && !bTravelingThroughDoor)
 		{
-			if (Door->bDoorIsOpen)
-			{
-				AI->SetActorLocation(Point1Location);
-			}
-			else
-			{
-				Door->OpenDoor();
-				TeleportLocation = Point1Location;
-			}
-
+			bTravelingThroughDoor = true;
+			ExitRoom(AI);
 			StopOverlapTimer();
 		}
 	}
@@ -110,58 +94,101 @@ void ADoorTravelPoints::StopDoorOpeningTimer()
 	GetWorldTimerManager().ClearTimer(TimerHandle_DoorOpeningTimer);
 }
 
+void ADoorTravelPoints::EnterRoom(AFollowAI* AI)
+{
+	if (Door->bDoorIsOpen)
+	{
+		AI->SetActorLocation(Point2Location);
+	}
+	else
+	{
+		Door->OpenDoor();
+		GetWorldTimerManager().SetTimer(TimerHandle_DoorOpeningTimer, this, &ADoorTravelPoints::StopDoorOpeningTimer, DoorOpeningTimer);
+		TeleportLocation = Point2Location;
+	}
+
+	StartTravelTimer();
+
+	if (!GetWorldTimerManager().IsTimerActive(TimerHandle_OverlapTimer))
+	{
+		StartOverlapTimer();
+	}
+	else
+	{
+		StopOverlapTimer();
+	}
+}
+
+void ADoorTravelPoints::ExitRoom(AFollowAI* AI)
+{
+	if (Door->bDoorIsOpen)
+	{
+		AI->SetActorLocation(Point1Location);
+	}
+	else
+	{
+		Door->OpenDoor();
+		GetWorldTimerManager().SetTimer(TimerHandle_DoorOpeningTimer, this, &ADoorTravelPoints::StopDoorOpeningTimer, DoorOpeningTimer);
+		TeleportLocation = Point1Location;
+	}
+
+	StartTravelTimer();
+
+	if (!GetWorldTimerManager().IsTimerActive(TimerHandle_OverlapTimer))
+	{
+		StartOverlapTimer();
+	}
+	else
+	{
+		StopOverlapTimer();
+	}
+}
+
+// these functions are necessary because when the AI loses the player and starts patroling again and they had to go through a door
+// they would non stop teleport in and out of the room where the travel points were placed
+void ADoorTravelPoints::StartTravelTimer()
+{
+	GetWorldTimerManager().SetTimer(TimerHandle_TravelTimer, this, &ADoorTravelPoints::ClearTravelTimer, TravelTimer);
+}
+
+void ADoorTravelPoints::ClearTravelTimer()
+{
+	GetWorldTimerManager().ClearTimer(TimerHandle_TravelTimer);
+	bTravelingThroughDoor = false;
+}
+
 void ADoorTravelPoints::OnOverlap1Begin(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
 	AI = Cast<AFollowAI>(OtherActor);
 	// only teleport into the room if the player is in that room
-	if (AI && Door && bPlayerIsInRoom && !bAIIsInRoom)
+	if (AI && Door && bPlayerIsInRoom && !bAIIsInRoom && !bTravelingThroughDoor)
 	{
-		if (Door->bDoorIsOpen)
-		{
-			AI->SetActorLocation(Point2Location);
-		}
-		else
-		{
-			Door->OpenDoor();
-			GetWorldTimerManager().SetTimer(TimerHandle_DoorOpeningTimer, this, &ADoorTravelPoints::StopDoorOpeningTimer, DoorOpeningTimer);
-			TeleportLocation = Point2Location;
-		}
+		bTravelingThroughDoor = true;
+		EnterRoom(AI);
+	}
 
-		if (!GetWorldTimerManager().IsTimerActive(TimerHandle_OverlapTimer))
-		{
-			StartOverlapTimer();
-		}
-		else
-		{
-			StopOverlapTimer();
-		}
+	// let the AI go in and out of rooms if they're patroling
+	if (AI && AI->bIsPatroling && !bTravelingThroughDoor)
+	{
+		bTravelingThroughDoor = true;
+		EnterRoom(AI);
 	}
 }
 
 void ADoorTravelPoints::OnOverlap2Begin(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
 	auto AI = Cast<AFollowAI>(OtherActor);
-	if (AI && Door && !bPlayerIsInRoom && bAIIsInRoom)
+	if (AI && Door && !bPlayerIsInRoom && bAIIsInRoom && !bTravelingThroughDoor)
 	{
-		if (Door->bDoorIsOpen)
-		{
-			AI->SetActorLocation(Point1Location);
-		}
-		else
-		{
-			Door->OpenDoor();
-			GetWorldTimerManager().SetTimer(TimerHandle_DoorOpeningTimer, this, &ADoorTravelPoints::StopDoorOpeningTimer, DoorOpeningTimer);
-			TeleportLocation = Point1Location;
-		}
+		bTravelingThroughDoor = true;
+		ExitRoom(AI);
+	}
 
-		if (!GetWorldTimerManager().IsTimerActive(TimerHandle_OverlapTimer))
-		{
-			StartOverlapTimer();
-		}
-		else
-		{
-			StopOverlapTimer();
-		}
+	// let the AI go in and out of rooms if they're patroling
+	if (AI && AI->bIsPatroling && !bTravelingThroughDoor)
+	{
+		bTravelingThroughDoor = true;
+		ExitRoom(AI);
 	}
 }
 

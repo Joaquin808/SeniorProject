@@ -25,16 +25,6 @@ protected:
 
 	FVector PlayerLocation;
 
-	UPROPERTY(EditDefaultsOnly)
-	float NonDetectedPatrolRadius;
-
-	UPROPERTY(EditDefaultsOnly)
-	float DetectedPatrolRadius;
-
-	float PatrolRadius;
-
-	bool bIsPatroling;
-
 	bool bSawPlayer;
 
 	bool bLostPlayer;
@@ -77,12 +67,23 @@ protected:
 	UPROPERTY(EditDefaultsOnly)
 	float SeenPlayerTimerLength;
 
+	UPROPERTY(EditAnywhere)
+	TArray<AActor*> PatrolPoints;
+
+	int32 NbrOfPatrolPoints;
+
+	int32 CurrentPatrolIndex;
+
+	FVector CurrentPatrolPointLocation;
+
 	UPROPERTY(EditDefaultsOnly)
 	bool bDebugMessages;
 
 public:
 	// Sets default values for this character's properties
 	AFollowAI();
+
+	bool bIsPatroling;
 
 protected:
 	// Called when the game starts or when spawned
@@ -91,6 +92,8 @@ protected:
 	void Patrol();
 
 	void PatrolTimerEnd();
+
+	FVector PatrolPoint();
 
 	void CheckNotMoving();
 

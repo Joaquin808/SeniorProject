@@ -56,6 +56,13 @@ protected:
 	bool bAIIsInRoom;
 
 	FTimerHandle TimerHandle_DoorOpeningTimer;
+
+	bool bTravelingThroughDoor;
+
+	FTimerHandle TimerHandle_TravelTimer;
+
+	UPROPERTY(EditDefaultsOnly)
+	float TravelTimer;
 	
 public:	
 	// Sets default values for this actor's properties
@@ -72,6 +79,14 @@ protected:
 	void StopOverlapTimer();
 
 	void StopDoorOpeningTimer();
+
+	void EnterRoom(AFollowAI* AI);
+
+	void ExitRoom(AFollowAI* AI);
+
+	void StartTravelTimer();
+
+	void ClearTravelTimer();
 
 public:	
 
