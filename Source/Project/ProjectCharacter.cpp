@@ -445,13 +445,13 @@ void AProjectCharacter::DoCrouch()
 	{
 		UnCrouch();
 		bIsCrouched = false;
-		//FirstPersonCameraComponent->SetRelativeLocation(FVector(39.5600014, 1.75, 64.0));
+		FirstPersonCameraComponent->SetRelativeLocation(FVector(0.439932f, 25.0f, 154.0f));
 	}
 	else
 	{
 		Crouch();
 		bIsCrouched = true;
-		//FirstPersonCameraComponent->SetRelativeLocation(FVector(39.5600014, 1.75, 32.0));
+		FirstPersonCameraComponent->SetRelativeLocation(FVector(0.439932f, 25.0f, 124.0f));
 	}
 }
 
