@@ -173,6 +173,13 @@ void ADoorTravelPoints::OnOverlap1Begin(UPrimitiveComponent* OverlappedComp, AAc
 		bTravelingThroughDoor = true;
 		EnterRoom(AI);
 	}
+
+	// let the AI go in and out of rooms if they're going after heard player sounds
+	if (AI && AI->bGoingAfterHeardPlayer && !bTravelingThroughDoor)
+	{
+		bTravelingThroughDoor = true;
+		EnterRoom(AI);
+	}
 }
 
 void ADoorTravelPoints::OnOverlap2Begin(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
@@ -186,6 +193,13 @@ void ADoorTravelPoints::OnOverlap2Begin(UPrimitiveComponent* OverlappedComp, AAc
 
 	// let the AI go in and out of rooms if they're patroling
 	if (AI && AI->bIsPatroling && !bTravelingThroughDoor)
+	{
+		bTravelingThroughDoor = true;
+		ExitRoom(AI);
+	}
+
+	// let the AI go in and out of rooms if they're going after heard player sounds
+	if (AI && AI->bGoingAfterHeardPlayer && !bTravelingThroughDoor)
 	{
 		bTravelingThroughDoor = true;
 		ExitRoom(AI);

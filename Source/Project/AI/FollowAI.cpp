@@ -11,6 +11,7 @@
 #include "Components/StaticMeshComponent.h"
 #include "Components/SkeletalMeshComponent.h"
 #include "Components/AudioComponent.h"
+#include "Actors/Vent.h"
 
 // Sets default values
 AFollowAI::AFollowAI()
@@ -32,6 +33,7 @@ AFollowAI::AFollowAI()
 	StencilValue = 2;
 
 	bPlayHearNoise = true;
+	bPlayAudio = true;
 }
 
 // Called when the game starts or when spawned
@@ -69,6 +71,11 @@ void AFollowAI::BeginPlay()
 	}
 
 	DefaultSightRadius = PawnSensingComp->SightRadius;
+
+	bHeardPlayerOnce = false;
+	HeardTimer = 0;
+	DefaultHearingThreshold = PawnSensingComp->HearingThreshold;
+	DefaultsLOSHearingThreshold = PawnSensingComp->LOSHearingThreshold;
 }
 
 void AFollowAI::Patrol()
@@ -76,6 +83,9 @@ void AFollowAI::Patrol()
 	if (bDebugMessages)
 		UE_LOG(LogTemp, Log, TEXT("Patrol"));
 
+	// just to make sure that if we don't have any patrol points then we don't try to patrol
+	if (PatrolPoints.Num() < 1)
+		return;
 	// want the AI to patrol very slowly rather than sprinting around
 	GetCharacterMovement()->MaxWalkSpeed = PatrolWalkSpeed;
 	UAIBlueprintHelperLibrary::SimpleMoveToLocation(GetController(), PatrolPoint());
@@ -171,6 +181,8 @@ void AFollowAI::CheckLocation()
 		//Patrol();
 		PatrolAroundPlayer();
 		GetWorldTimerManager().ClearTimer(TimerHandle_NotMoving);
+		UpdateHearingRadiusAfterDetection();
+		bGoingAfterHeardPlayer = false;
 		if (bDebugMessages)
 			UE_LOG(LogTemp, Log, TEXT("Start patrol again"));
 	}
@@ -234,13 +246,16 @@ void AFollowAI::OnHearPawn(APawn* OtherActor, const FVector& Location, float Vol
 {
 	if (bDebugMessages)
 		UE_LOG(LogTemp, Log, TEXT("Heard something"));
+
 	bIsPatroling = false;
+
+	if (bLostPlayer && PlayerReference == OtherActor)
+	{
+		JumpOutVent();
+	}
+
 	if (!bSawPlayer)
 		GetController()->StopMovement();
-
-	// Currently plays a fear sound when being heard. Only want this to play once until the AI is lost again
-	if (!DetectionAudioComp->IsPlaying() && bPlayHearNoise)
-		PlayHearDetectionNoise();
 
 	FVector LookAtLocation = Location - GetActorLocation();
 	LookAtLocation.Normalize();
@@ -251,20 +266,86 @@ void AFollowAI::OnHearPawn(APawn* OtherActor, const FVector& Location, float Vol
 
 	SetActorRotation(NewLookAt);
 
-	if (bLostPlayer)
+	// Currently plays a fear sound when being heard. Only want this to play once until the AI is lost again
+	if (!DetectionAudioComp->IsPlaying() && bPlayHearNoise)
+		PlayHearDetectionNoise();
+
+	if (!bHeardPlayerOnce)
+	{
+		UpdateHearingRadiusAfterDetection();
+		bHeardPlayerOnce = true;
+	}
+
+	HeardTimer++;
+	if (bLostPlayer || HeardTimer >= MaxHeardIntervalTimer)
 	{
 		UAIBlueprintHelperLibrary::SimpleMoveToLocation(GetController(), Location);
+		bGoingAfterHeardPlayer = true;
+	}
+}
+
+void AFollowAI::UpdateHearingRadiusAfterDetection()
+{
+	// I want the AI's hearing threshold to be different based on which kind of detection has been detected
+	// if the AI has only heard the player then I want to increase the sound a little bit to heighten the AI's senses
+	// if the AI has seen the player then I want the sound threshold to be huge and have the AI track the player throughout large areas of the map
+	if (bHeardPlayerOnce)
+	{
+		if (bLostPlayer)
+		{
+			PawnSensingComp->HearingThreshold = DetectedHearingThreshold;
+			PawnSensingComp->LOSHearingThreshold = DetectedHearingThreshold;
+			return;
+		}
+
+		PawnSensingComp->HearingThreshold = HeardHearingThreshold;
+		PawnSensingComp->LOSHearingThreshold = HeardLOSHearingThreshold;
+	}
+}
+
+void AFollowAI::JumpOutVent()
+{
+	float Distance = 0;
+	AVent* Vent = nullptr;
+	TArray<AActor*> Vents;
+	UGameplayStatics::GetAllActorsOfClass(GetWorld(), AVent::StaticClass(), Vents);
+	if (Vents.Num() >= 1)
+	{
+		for (int32 i = 0; i < Vents.Num(); i++)
+		{
+			if (Distance == 0)
+			{
+				Distance = FVector::Dist(PlayerReference->GetActorLocation(), Vents[i]->GetActorLocation());
+				Vent = Cast<AVent>(Vents[i]);
+			}
+
+			if (FVector::Dist(PlayerReference->GetActorLocation(), Vents[i]->GetActorLocation()) < Distance)
+			{
+				Distance = FVector::Dist(PlayerReference->GetActorLocation(), Vents[i]->GetActorLocation());
+				Vent = Cast<AVent>(Vents[i]);
+			}
+		}
+
+		Vent->OutlineVent(true);
+		Vent->AI = this;
+		Vent->OpenVent();
 	}
 }
 
 void AFollowAI::PlaySeenDetectionNoise()
 {
+	if (!bPlayAudio)
+		return;
+
 	DetectionAudioComp->SetBoolParameter(FName{ TEXT("Seen") }, true);
 	DetectionAudioComp->Play();
 }
 
 void AFollowAI::PlayHearDetectionNoise()
 {
+	if (!bPlayAudio)
+		return;
+
 	if (GetWorldTimerManager().IsTimerActive(TimerHandle_HearNoiseTimer))
 	{
 		return;

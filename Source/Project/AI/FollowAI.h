@@ -101,6 +101,33 @@ protected:
 	float HearNoiseTimerDuration;
 
 	UPROPERTY(EditDefaultsOnly)
+	bool bPlayAudio;
+
+	bool bHeardPlayerOnce;
+
+	int32 HeardTimer;
+
+	// how many intervals do I want the AI to hear the player before they move to that location
+	UPROPERTY(EditDefaultsOnly)
+	int32 MaxHeardIntervalTimer;
+
+	float DefaultHearingThreshold;
+
+	float DefaultsLOSHearingThreshold;
+
+	UPROPERTY(EditDefaultsOnly)
+	float HeardHearingThreshold;
+
+	UPROPERTY(EditDefaultsOnly)
+	float HeardLOSHearingThreshold;
+
+	UPROPERTY(EditDefaultsOnly)
+	float DetectedHearingThreshold;
+
+	UPROPERTY(EditDefaultsOnly)
+	float DetectedLOSHearingThreshold;
+
+	UPROPERTY(EditDefaultsOnly)
 	bool bDebugMessages;
 
 public:
@@ -108,6 +135,8 @@ public:
 	AFollowAI();
 
 	bool bIsPatroling;
+
+	bool bGoingAfterHeardPlayer;
 
 protected:
 	// Called when the game starts or when spawned
@@ -144,6 +173,10 @@ protected:
 	void OutlineFeet(bool bOutlineFeet);
 
 	void ClearSeenPlayerTimer();
+
+	void UpdateHearingRadiusAfterDetection();
+
+	void JumpOutVent();
 
 public:	
 
