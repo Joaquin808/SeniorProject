@@ -88,6 +88,10 @@ protected:
 
 	void ClearTravelTimer();
 
+	bool CanEnterRoom(AFollowAI* AI);
+
+	bool CanExitRoom(AFollowAI* AI);
+
 public:	
 
 	UFUNCTION()

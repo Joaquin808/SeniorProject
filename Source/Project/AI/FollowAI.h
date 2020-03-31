@@ -68,6 +68,13 @@ protected:
 	UPROPERTY(EditAnywhere)
 	TArray<AActor*> PatrolPoints;
 
+	UPROPERTY(EditAnywhere)
+	TArray<AActor*> RandomPatrolPoints;
+
+	// the percentage that of when I want the AI to travel to a random point within their regular patrol path
+	UPROPERTY(EditAnywhere, meta = (ClampMin = "0", ClampMax = "100"))
+	int32 RandomPatrolPercentage;
+
 	int32 NbrOfPatrolPoints;
 
 	int32 CurrentPatrolIndex;
@@ -79,6 +86,7 @@ protected:
 
 	FTimerHandle TimerHandle_PatrolAroundPlayer;
 
+	// the min and max amount of time before the next random movement around player occurs
 	UPROPERTY(EditDefaultsOnly)
 	float PatrolRandMin;
 
@@ -144,9 +152,13 @@ protected:
 
 	void Patrol();
 
+	void StartPatrolTimer(float InRate);
+
 	void PatrolTimerEnd();
 
 	FVector PatrolPoint();
+
+	FVector RandomPatrolPoint();
 
 	void PatrolAroundPlayer();
 

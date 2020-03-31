@@ -56,7 +56,7 @@ void ADoorTravelPoints::CheckIfOverlapping()
 	{
 		UE_LOG(LogTemp, Log, TEXT("Overlapped point 1"));
 		// only teleport into the room if the player is in that room
-		if (Door && bPlayerIsInRoom && !bAIIsInRoom && !bTravelingThroughDoor)
+		if (CanEnterRoom(AI))
 		{
 			bTravelingThroughDoor = true;
 			EnterRoom(AI);
@@ -68,7 +68,7 @@ void ADoorTravelPoints::CheckIfOverlapping()
 	{
 		UE_LOG(LogTemp, Log, TEXT("Overlapped point 2"));
 		// only teleport into the room if the player is in that room
-		if (Door && !bPlayerIsInRoom && bAIIsInRoom && !bTravelingThroughDoor)
+		if (CanExitRoom(AI))
 		{
 			bTravelingThroughDoor = true;
 			ExitRoom(AI);
@@ -157,25 +157,41 @@ void ADoorTravelPoints::ClearTravelTimer()
 	bTravelingThroughDoor = false;
 }
 
+bool ADoorTravelPoints::CanEnterRoom(AFollowAI* AI)
+{
+	bool LocalBool = false;
+	if (AI && Door && bPlayerIsInRoom && !bAIIsInRoom && !bTravelingThroughDoor)
+		LocalBool = true;
+
+	if (AI && AI->bIsPatroling && !bTravelingThroughDoor)
+		LocalBool = true;
+
+	if (AI && AI->bGoingAfterHeardPlayer && !bTravelingThroughDoor)
+		LocalBool = true;
+
+	return LocalBool;
+}
+
+bool ADoorTravelPoints::CanExitRoom(AFollowAI* AI)
+{
+	bool LocalBool = false;
+	if (AI && Door && !bPlayerIsInRoom && bAIIsInRoom && !bTravelingThroughDoor)
+		LocalBool = true;
+
+	if (AI && AI->bIsPatroling && !bTravelingThroughDoor)
+		LocalBool = true;
+
+	if (AI && AI->bGoingAfterHeardPlayer && !bTravelingThroughDoor)
+		LocalBool = true;
+
+	return LocalBool;
+}
+
 void ADoorTravelPoints::OnOverlap1Begin(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
 	AI = Cast<AFollowAI>(OtherActor);
 	// only teleport into the room if the player is in that room
-	if (AI && Door && bPlayerIsInRoom && !bAIIsInRoom && !bTravelingThroughDoor)
-	{
-		bTravelingThroughDoor = true;
-		EnterRoom(AI);
-	}
-
-	// let the AI go in and out of rooms if they're patroling
-	if (AI && AI->bIsPatroling && !bTravelingThroughDoor)
-	{
-		bTravelingThroughDoor = true;
-		EnterRoom(AI);
-	}
-
-	// let the AI go in and out of rooms if they're going after heard player sounds
-	if (AI && AI->bGoingAfterHeardPlayer && !bTravelingThroughDoor)
+	if (AI && CanEnterRoom(AI))
 	{
 		bTravelingThroughDoor = true;
 		EnterRoom(AI);
@@ -185,21 +201,7 @@ void ADoorTravelPoints::OnOverlap1Begin(UPrimitiveComponent* OverlappedComp, AAc
 void ADoorTravelPoints::OnOverlap2Begin(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
 	auto AI = Cast<AFollowAI>(OtherActor);
-	if (AI && Door && !bPlayerIsInRoom && bAIIsInRoom && !bTravelingThroughDoor)
-	{
-		bTravelingThroughDoor = true;
-		ExitRoom(AI);
-	}
-
-	// let the AI go in and out of rooms if they're patroling
-	if (AI && AI->bIsPatroling && !bTravelingThroughDoor)
-	{
-		bTravelingThroughDoor = true;
-		ExitRoom(AI);
-	}
-
-	// let the AI go in and out of rooms if they're going after heard player sounds
-	if (AI && AI->bGoingAfterHeardPlayer && !bTravelingThroughDoor)
+	if (CanExitRoom(AI))
 	{
 		bTravelingThroughDoor = true;
 		ExitRoom(AI);
@@ -211,6 +213,7 @@ void ADoorTravelPoints::OnOverlapBoxBegin(UPrimitiveComponent* OverlappedComp, A
 	if (PlayerReference && PlayerReference == OtherActor)
 	{
 		bPlayerIsInRoom = true;
+		PlayerReference->bIsInRoom = true;
 	}
 
 	if (AI && AI == OtherActor)
@@ -224,6 +227,7 @@ void ADoorTravelPoints::OnOverlapBoxEnd(UPrimitiveComponent* OverlappedComp, AAc
 	if (PlayerReference && PlayerReference == OtherActor)
 	{
 		bPlayerIsInRoom = false;
+		PlayerReference->bIsInRoom = true;
 	}
 
 	if (AI && AI == OtherActor)

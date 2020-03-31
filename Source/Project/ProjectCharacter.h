@@ -172,6 +172,8 @@ public:
 
 	AActor* HidingSpot;
 
+	bool bIsInRoom;
+
 protected:
 
 	virtual void BeginPlay();

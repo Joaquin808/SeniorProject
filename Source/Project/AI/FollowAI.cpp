@@ -86,6 +86,19 @@ void AFollowAI::Patrol()
 	// just to make sure that if we don't have any patrol points then we don't try to patrol
 	if (PatrolPoints.Num() < 1)
 		return;
+
+	if (RandomPatrolPoints.Num() >= 1)
+	{
+		int32 RandNum = 0;
+		RandNum = FMath::RandRange(0, 100);
+		if (RandNum < RandomPatrolPercentage)
+		{
+			UAIBlueprintHelperLibrary::SimpleMoveToLocation(GetController(), RandomPatrolPoint());
+			StartPatrolTimer(3.0f);
+			return;
+		}
+	}
+
 	// want the AI to patrol very slowly rather than sprinting around
 	GetCharacterMovement()->MaxWalkSpeed = PatrolWalkSpeed;
 	UAIBlueprintHelperLibrary::SimpleMoveToLocation(GetController(), PatrolPoint());
@@ -97,9 +110,14 @@ void AFollowAI::Patrol()
 			CurrentPatrolIndex = 0;
 		}
 
-		FTimerHandle TimerHandle_PatrolTimer;
-		GetWorldTimerManager().SetTimer(TimerHandle_PatrolTimer, this, &AFollowAI::PatrolTimerEnd, 3.0f, false);
+		StartPatrolTimer(3.0f);
 	}
+}
+
+void AFollowAI::StartPatrolTimer(float InRate)
+{
+	FTimerHandle TimerHandle_PatrolTimer;
+	GetWorldTimerManager().SetTimer(TimerHandle_PatrolTimer, this, &AFollowAI::PatrolTimerEnd, InRate, false);
 }
 
 void AFollowAI::PatrolTimerEnd()
@@ -114,8 +132,7 @@ void AFollowAI::PatrolTimerEnd()
 		}
 		else
 		{
-			FTimerHandle TimerHandle_PatrolTimer;
-			GetWorldTimerManager().SetTimer(TimerHandle_PatrolTimer, this, &AFollowAI::PatrolTimerEnd, 0.5f, false);
+			StartPatrolTimer(0.5f);
 			if (bDebugMessages)
 				UE_LOG(LogTemp, Log, TEXT("Not close enough to point to transition"));
 		}
@@ -125,6 +142,11 @@ void AFollowAI::PatrolTimerEnd()
 FVector AFollowAI::PatrolPoint()
 {
 	return CurrentPatrolPointLocation = PatrolPoints[CurrentPatrolIndex]->GetActorLocation();
+}
+
+FVector AFollowAI::RandomPatrolPoint()
+{
+	return CurrentPatrolPointLocation = RandomPatrolPoints[FMath::RandRange(0, RandomPatrolPoints.Num() - 1)]->GetActorLocation();
 }
 
 // when we lose the player, we want the AI to patrol around the player within a certain radius to wait to see if the player comes out of hiding
@@ -158,29 +180,30 @@ void AFollowAI::CheckNotMoving()
 		return;
 	}
 
-	if (bSawPlayer)
-	{
-		// starts timer to see if the AI location has been within a certain distance for more than 3 seconds
-		// this issue was only happening after following the player, so only run this if they player has been seen
-		AILocation = GetActorLocation();
-		GetWorldTimerManager().SetTimer(TimerHandle_NotMoving, this, &AFollowAI::CheckLocation, 0.01f, false, 3.0f);
-	}
+	// starts timer to see if the AI location has been within a certain distance for more than 3 seconds
+	AILocation = GetActorLocation();
+	GetWorldTimerManager().SetTimer(TimerHandle_NotMoving, this, &AFollowAI::CheckLocation, 0.01f, false, 3.0f);
 }
 
 void AFollowAI::CheckLocation()
 {
 	if (bDebugMessages)
 		UE_LOG(LogTemp, Log, TEXT("Check location"));
+
+	GetWorldTimerManager().ClearTimer(TimerHandle_NotMoving);
 	// if the AI has been in a similar location for more than 3 seconds, patrol again
 	if (FVector::Dist(GetActorLocation(), AILocation) <= 50)
 	{
 		// if the player isn't beeing seen but was seen in the previous interval, then I need to patrol around the last point the player was seen
-		bSawPlayer = false;
-		bLostPlayer = true;
+		if (bSawPlayer)
+		{
+			bLostPlayer = true;
+			bSawPlayer = false;
+		}
+
 		bIsPatroling = true;
 		//Patrol();
 		PatrolAroundPlayer();
-		GetWorldTimerManager().ClearTimer(TimerHandle_NotMoving);
 		UpdateHearingRadiusAfterDetection();
 		bGoingAfterHeardPlayer = false;
 		if (bDebugMessages)
@@ -249,7 +272,7 @@ void AFollowAI::OnHearPawn(APawn* OtherActor, const FVector& Location, float Vol
 
 	bIsPatroling = false;
 
-	if (bLostPlayer && PlayerReference == OtherActor)
+	if (bLostPlayer && PlayerReference == OtherActor && PlayerReference->bIsInRoom)
 	{
 		JumpOutVent();
 	}
@@ -281,6 +304,7 @@ void AFollowAI::OnHearPawn(APawn* OtherActor, const FVector& Location, float Vol
 	{
 		UAIBlueprintHelperLibrary::SimpleMoveToLocation(GetController(), Location);
 		bGoingAfterHeardPlayer = true;
+		HeardTimer = 0;
 	}
 }
 
@@ -326,9 +350,13 @@ void AFollowAI::JumpOutVent()
 			}
 		}
 
-		Vent->OutlineVent(true);
-		Vent->AI = this;
-		Vent->OpenVent();
+		// don't want to teleport to a vent if the AI is closer to the player than a vent is
+		if (FVector::Dist(GetActorLocation(), PlayerReference->GetActorLocation()) > Distance)
+		{
+			Vent->OutlineVent(true);
+			Vent->AI = this;
+			Vent->OpenVent();
+		}
 	}
 }
 
