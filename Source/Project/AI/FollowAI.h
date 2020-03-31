@@ -105,6 +105,7 @@ protected:
 
 	FTimerHandle TimerHandle_HearNoiseTimer;
 
+	// how long before the AI should be able to play their OnHearNoise detection audio clip
 	UPROPERTY(EditDefaultsOnly)
 	float HearNoiseTimerDuration;
 
@@ -134,6 +135,18 @@ protected:
 
 	UPROPERTY(EditDefaultsOnly)
 	float DetectedLOSHearingThreshold;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
+	class UAudioComponent* RandomAudioComp;
+
+	UPROPERTY(EditDefaultsOnly)
+	TArray<class USoundCue*> RandomSoundCues;
+
+	// the time in between playing a random sound
+	UPROPERTY(EditDefaultsOnly)
+	float RandomSoundTimer;
+
+	FTimerHandle TimerHandle_AudioTimer;
 
 	UPROPERTY(EditDefaultsOnly)
 	bool bDebugMessages;
@@ -189,6 +202,14 @@ protected:
 	void UpdateHearingRadiusAfterDetection();
 
 	void JumpOutVent();
+
+	void PlayRandomSound();
+
+	void StartAudioTimer(float InRate);
+
+	void OnAudioTimerEnd();
+
+	bool AudioTimerActive();
 
 public:	
 

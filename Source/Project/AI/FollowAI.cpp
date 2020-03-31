@@ -12,6 +12,7 @@
 #include "Components/SkeletalMeshComponent.h"
 #include "Components/AudioComponent.h"
 #include "Actors/Vent.h"
+#include "Sound/SoundCue.h"
 
 // Sets default values
 AFollowAI::AFollowAI()
@@ -29,6 +30,8 @@ AFollowAI::AFollowAI()
 	FeetOutline->SetupAttachment(GetMesh());
 
 	DetectionAudioComp = CreateDefaultSubobject<UAudioComponent>(TEXT("DetectionAudioComp"));
+
+	RandomAudioComp = CreateDefaultSubobject<UAudioComponent>(TEXT("RandomAudioComp"));
 
 	StencilValue = 2;
 
@@ -76,6 +79,16 @@ void AFollowAI::BeginPlay()
 	HeardTimer = 0;
 	DefaultHearingThreshold = PawnSensingComp->HearingThreshold;
 	DefaultsLOSHearingThreshold = PawnSensingComp->LOSHearingThreshold;
+
+	if (RandomSoundCues.Num() >= 1 && bPlayAudio)
+	{
+		// plays random laughing sound at the beginning to add creepiness to the game
+		RandomAudioComp->Sound = RandomSoundCues[0];
+		RandomAudioComp->Play();
+
+		FTimerHandle TimerHandle_RandomSound;
+		GetWorldTimerManager().SetTimer(TimerHandle_RandomSound, this, &AFollowAI::PlayRandomSound, RandomSoundTimer, true);
+	}
 }
 
 void AFollowAI::Patrol()
@@ -199,11 +212,14 @@ void AFollowAI::CheckLocation()
 		{
 			bLostPlayer = true;
 			bSawPlayer = false;
+			PatrolAroundPlayer();
+		}
+		else
+		{
+			Patrol();
 		}
 
 		bIsPatroling = true;
-		//Patrol();
-		PatrolAroundPlayer();
 		UpdateHearingRadiusAfterDetection();
 		bGoingAfterHeardPlayer = false;
 		if (bDebugMessages)
@@ -329,6 +345,9 @@ void AFollowAI::UpdateHearingRadiusAfterDetection()
 
 void AFollowAI::JumpOutVent()
 {
+	if (bDebugMessages)
+		UE_LOG(LogTemp, Log, TEXT("Jump out vent"));
+
 	float Distance = 0;
 	AVent* Vent = nullptr;
 	TArray<AActor*> Vents;
@@ -353,11 +372,44 @@ void AFollowAI::JumpOutVent()
 		// don't want to teleport to a vent if the AI is closer to the player than a vent is
 		if (FVector::Dist(GetActorLocation(), PlayerReference->GetActorLocation()) > Distance)
 		{
+			if (bDebugMessages)
+				UE_LOG(LogTemp, Log, TEXT("Vent is closer"));
+
 			Vent->OutlineVent(true);
 			Vent->AI = this;
 			Vent->OpenVent();
 		}
 	}
+}
+
+void AFollowAI::PlayRandomSound()
+{
+	// don't play the random sound if a more important sound is already being played
+	if (AudioTimerActive())
+		return;
+
+	int RandNum = RandomSoundCues.Num() - 1;
+	// since I only have one random sound currently, it'll only play one sound
+	// future proof for when I add more random sounds to play
+	// the very first sound is played on BeginPlay so i want to play any random sound after the very first one
+	RandomAudioComp->Sound = RandomSoundCues[FMath::RandRange(1, RandNum)];
+	RandomAudioComp->Play();
+	StartAudioTimer(RandomAudioComp->Sound->GetDuration());
+}
+
+void AFollowAI::StartAudioTimer(float InRate)
+{
+	GetWorldTimerManager().SetTimer(TimerHandle_AudioTimer, this, &AFollowAI::OnAudioTimerEnd, InRate);
+}
+
+void AFollowAI::OnAudioTimerEnd()
+{
+	GetWorldTimerManager().ClearTimer(TimerHandle_AudioTimer);
+}
+
+bool AFollowAI::AudioTimerActive()
+{
+	return GetWorldTimerManager().IsTimerActive(TimerHandle_AudioTimer);
 }
 
 void AFollowAI::PlaySeenDetectionNoise()
@@ -367,6 +419,7 @@ void AFollowAI::PlaySeenDetectionNoise()
 
 	DetectionAudioComp->SetBoolParameter(FName{ TEXT("Seen") }, true);
 	DetectionAudioComp->Play();
+	StartAudioTimer(DetectionAudioComp->Sound->GetDuration());
 }
 
 void AFollowAI::PlayHearDetectionNoise()
@@ -383,6 +436,7 @@ void AFollowAI::PlayHearDetectionNoise()
 	DetectionAudioComp->Play();
 	bPlayHearNoise = false;
 	GetWorldTimerManager().SetTimer(TimerHandle_HearNoiseTimer, this, &AFollowAI::CanPlayHearNoiseAgain, HearNoiseTimerDuration);
+	StartAudioTimer(DetectionAudioComp->Sound->GetDuration());
 }
 
 void AFollowAI::CanPlayHearNoiseAgain()
