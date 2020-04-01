@@ -75,17 +75,19 @@ void AFollowAI::BeginPlay()
 
 	DefaultSightRadius = PawnSensingComp->SightRadius;
 
+	// since hearing variables get changed I want to get the default sound just in case i need it
 	bHeardPlayerOnce = false;
 	HeardTimer = 0;
 	DefaultHearingThreshold = PawnSensingComp->HearingThreshold;
 	DefaultsLOSHearingThreshold = PawnSensingComp->LOSHearingThreshold;
 
+	// plays intro sound
+	RandomAudioComp->Sound = IntroSoundCue;
+	RandomAudioComp->Play();
+	StartAudioTimer(RandomAudioComp->Sound->GetDuration());
+
 	if (RandomSoundCues.Num() >= 1 && bPlayAudio)
 	{
-		// plays random laughing sound at the beginning to add creepiness to the game
-		RandomAudioComp->Sound = RandomSoundCues[0];
-		RandomAudioComp->Play();
-
 		FTimerHandle TimerHandle_RandomSound;
 		GetWorldTimerManager().SetTimer(TimerHandle_RandomSound, this, &AFollowAI::PlayRandomSound, RandomSoundTimer, true);
 	}
@@ -378,6 +380,7 @@ void AFollowAI::JumpOutVent()
 			Vent->OutlineVent(true);
 			Vent->AI = this;
 			Vent->OpenVent();
+			PlayVentAudio();
 		}
 	}
 }
@@ -389,10 +392,7 @@ void AFollowAI::PlayRandomSound()
 		return;
 
 	int RandNum = RandomSoundCues.Num() - 1;
-	// since I only have one random sound currently, it'll only play one sound
-	// future proof for when I add more random sounds to play
-	// the very first sound is played on BeginPlay so i want to play any random sound after the very first one
-	RandomAudioComp->Sound = RandomSoundCues[FMath::RandRange(1, RandNum)];
+	RandomAudioComp->Sound = RandomSoundCues[FMath::RandRange(0, RandNum)];
 	RandomAudioComp->Play();
 	StartAudioTimer(RandomAudioComp->Sound->GetDuration());
 }
@@ -410,6 +410,16 @@ void AFollowAI::OnAudioTimerEnd()
 bool AFollowAI::AudioTimerActive()
 {
 	return GetWorldTimerManager().IsTimerActive(TimerHandle_AudioTimer);
+}
+
+void AFollowAI::PlayVentAudio()
+{
+	// don't play the vent sound if it's already been played
+	if (RandomAudioComp->Sound == VentSoundCue)
+		return;
+	RandomAudioComp->Sound = VentSoundCue;
+	RandomAudioComp->Play();
+	StartAudioTimer(RandomAudioComp->Sound->GetDuration());
 }
 
 void AFollowAI::PlaySeenDetectionNoise()

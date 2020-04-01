@@ -149,6 +149,12 @@ protected:
 	FTimerHandle TimerHandle_AudioTimer;
 
 	UPROPERTY(EditDefaultsOnly)
+	class USoundCue* IntroSoundCue;
+
+	UPROPERTY(EditDefaultsOnly)
+	class USoundCue* VentSoundCue;
+
+	UPROPERTY(EditDefaultsOnly)
 	bool bDebugMessages;
 
 public:
@@ -210,6 +216,8 @@ protected:
 	void OnAudioTimerEnd();
 
 	bool AudioTimerActive();
+
+	void PlayVentAudio();
 
 public:	
 
