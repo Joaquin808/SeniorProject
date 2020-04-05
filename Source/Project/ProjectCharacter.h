@@ -140,6 +140,9 @@ protected:
 
 	APlayerController* PlayerController;
 
+	UPROPERTY(VisibleAnywhere)
+	class UAudioComponent* CombatAudioComp;
+
 public:
 
 	AProjectCharacter();

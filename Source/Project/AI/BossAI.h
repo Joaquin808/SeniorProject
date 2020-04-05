@@ -55,6 +55,14 @@ protected:
     UPROPERTY(EditDefaultsOnly)
     float StunnedDuration;
 
+	UPROPERTY(VisibleAnywhere)
+	USkeletalMeshComponent* FeetOutline;
+
+	bool bIsOutlined;
+
+	UPROPERTY(VisibleAnywhere)
+	class UAudioComponent* CombatAudioComp;
+
 public:
 	// Sets default values for this character's properties
 	ABossAI();
@@ -81,6 +89,10 @@ protected:
 	void StartRoamingTimer();
 
 	void StopRoamingTimer();
+
+	void EnableFeetOutline();
+
+	void DisableFeetOutline();
 
 public:	
 	// Called every frame

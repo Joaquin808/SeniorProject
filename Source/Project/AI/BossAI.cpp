@@ -11,6 +11,7 @@
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Components/CombatComponent.h"
 #include "Components/AudioComponent.h"
+#include "Components/SkeletalMeshComponent.h"
 
 // Sets default values
 ABossAI::ABossAI()
@@ -21,6 +22,11 @@ ABossAI::ABossAI()
 	CombatComponent = CreateDefaultSubobject<UCombatComponent>(TEXT("CombatComponent"));
 
 	FootstepAudioComp = CreateDefaultSubobject<UAudioComponent>(TEXT("FootstepAudioComp"));
+
+	FeetOutline = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("FeetOutline"));
+	FeetOutline->SetupAttachment(GetMesh());
+
+	CombatAudioComp = CreateDefaultSubobject<UAudioComponent>(TEXT("CombatAudioComp"));
 }
 
 // Called when the game starts or when spawned
@@ -41,7 +47,7 @@ void ABossAI::BeginPlay()
 		Weapon->SetOwner(this);
 	}
 
-	CombatComponent->Owner = this;
+	CombatComponent->Initialize(this, CombatAudioComp);
 
 	PlayerReference = Cast<AProjectCharacter>(UGameplayStatics::GetPlayerCharacter(this, 0));
     PlayerReference->BossAIReference = this;
@@ -113,6 +119,8 @@ void ABossAI::CheckDistanceToPlayer()
 			Weapon->SetActorHiddenInGame(false);
 		}
 		
+		if (!bIsOutlined)
+			EnableFeetOutline();
 		CombatChoice();
 	}
 	else
@@ -123,6 +131,7 @@ void ABossAI::CheckDistanceToPlayer()
 			Weapon->SetActorHiddenInGame(true);
 		}
 
+		DisableFeetOutline();
 		ApproachPlayer();
 	}
 }
@@ -270,6 +279,9 @@ void ABossAI::EnableOutlineEffect()
 
 	Weapon->SwordMesh->SetRenderCustomDepth(true);
 	Weapon->SwordMesh->SetCustomDepthStencilValue(2);
+
+	DisableFeetOutline();
+	bIsOutlined = true;
 }
 
 void ABossAI::DisableOutlineEffect()
@@ -279,4 +291,18 @@ void ABossAI::DisableOutlineEffect()
 
 	Weapon->SwordMesh->SetRenderCustomDepth(false);
 	Weapon->SwordMesh->SetCustomDepthStencilValue(0);
+
+	bIsOutlined = false;
+}
+
+void ABossAI::EnableFeetOutline()
+{
+	FeetOutline->SetRenderCustomDepth(true);
+	FeetOutline->SetCustomDepthStencilValue(2);
+}
+
+void ABossAI::DisableFeetOutline()
+{
+	FeetOutline->SetRenderCustomDepth(false);
+	FeetOutline->SetCustomDepthStencilValue(0);
 }

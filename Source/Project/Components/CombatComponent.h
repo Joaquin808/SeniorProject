@@ -53,13 +53,19 @@ public:
 
 	ACharacter* Owner;
 
+	class UAudioComponent* CombatAudio;
+
 protected:
 	// Called when the game starts
 	virtual void BeginPlay() override;
 
+	bool StartEventTimer(float InRate, bool bCanBeOverriden);
+
+	bool EventTimerActive();
+
 public:	
-	// Called every frame
-	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
+	
+	void Initialize(ACharacter* Owner, UAudioComponent* CombatAudioComp);
 
 	bool TakeDamage(float Damage);
 
@@ -78,5 +84,7 @@ public:
 	void BlockedHitDone();
 
 	void ClearTimer();
+
+	void PlayCombatAudio(int32 Type);
 		
 };

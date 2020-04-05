@@ -24,6 +24,7 @@
 #include "AI/FollowAI.h"
 #include "Engine/Engine.h"
 #include "Pickups/Keys/DoorKey.h"
+#include "Components/AudioComponent.h"
 
 //////////////////////////////////////////////////////////////////////////
 // AProjectCharacter
@@ -58,6 +59,7 @@ AProjectCharacter::AProjectCharacter()
 
 	CombatComponent = CreateDefaultSubobject<UCombatComponent>(TEXT("CombatComponent"));
 
+	CombatAudioComp = CreateDefaultSubobject<UAudioComponent>(TEXT("CombatAudioComp"));
 }
 
 void AProjectCharacter::BeginPlay()
@@ -74,7 +76,7 @@ void AProjectCharacter::BeginPlay()
 		Light->SetActorLocation(GetActorLocation() + FVector(0, 0, LightHeight));
 	}
 
-	CombatComponent->Owner = this;
+	CombatComponent->Initialize(this, CombatAudioComp);
 
 	// I need the mesh hidden when were in the official map for the horror process, but need it visible in the BossMap for animations
 	if (UGameplayStatics::GetCurrentLevelName(this) == "Official")
