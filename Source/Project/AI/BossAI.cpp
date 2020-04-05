@@ -66,7 +66,7 @@ void ABossAI::ApproachPlayer()
 		return;
 	}
 
-	UE_LOG(LogTemp, Log, TEXT("Approach player"));
+	LogMessage("Approach player");
 	UAIBlueprintHelperLibrary::SimpleMoveToLocation(GetController(), PlayerReference->GetActorLocation() - FVector(50, 0, 0));
 }
 
@@ -195,7 +195,7 @@ void ABossAI::MoveAroundPlayer()
 	// if the target is not equal to nullptr, simply move to the current location of the current target (RoamingPoints)
 	if (Target != nullptr)
 	{
-		UE_LOG(LogTemp, Log, TEXT("Move Around Player"));
+		LogMessage("Move Around Player");
 		AIMoveToLocation = Target->GetActorLocation();
 		UAIBlueprintHelperLibrary::SimpleMoveToLocation(GetController(), AIMoveToLocation);
 	}
@@ -212,7 +212,7 @@ void ABossAI::StartRoamingTimer()
 		return;
 	}
 
-	UE_LOG(LogTemp, Log, TEXT("StartRoamingTimer"));
+	LogMessage("StartRoamingTimer");
 	GetWorldTimerManager().SetTimer(TimerHandle_MoveAroundPlayer, this, &ABossAI::MoveAroundPlayer, 1.5f, true);
 }
 
@@ -227,7 +227,7 @@ void ABossAI::StopRoamingTimer()
 	{
 		if (FVector::Dist(GetActorLocation(), AIMoveToLocation) <= 50)
 		{
-			UE_LOG(LogTemp, Log, TEXT("StopRoamingTimer"));
+			LogMessage("StopRoamingTimer");
 			GetWorldTimerManager().ClearTimer(CombatComponent->TimerHandle_EventTimer);
 			return;
 		}
@@ -237,7 +237,7 @@ void ABossAI::StopRoamingTimer()
 		}
 	}
 
-	UE_LOG(LogTemp, Log, TEXT("StopRoamingTimer"));
+	LogMessage("StopRoamingTimer");
 	GetWorldTimerManager().ClearTimer(CombatComponent->TimerHandle_EventTimer);
 }
 
@@ -305,4 +305,9 @@ void ABossAI::DisableFeetOutline()
 {
 	FeetOutline->SetRenderCustomDepth(false);
 	FeetOutline->SetCustomDepthStencilValue(0);
+}
+
+void ABossAI::LogMessage(FString Message)
+{
+	UE_LOG(LogTemp, Log, TEXT("%s"), *Message);
 }

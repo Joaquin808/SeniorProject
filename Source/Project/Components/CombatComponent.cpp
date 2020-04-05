@@ -38,7 +38,7 @@ void UCombatComponent::Initialize(ACharacter* Owner, UAudioComponent* CombatAudi
 
 bool UCombatComponent::TakeDamage(float Damage)
 {
-	UE_LOG(LogTemp, Log, TEXT("Damage done to BossAI"));
+	LogMessage("Damage done to BossAI");
 	if (bIsBlocking)
 	{
 		if (StartEventTimer(BlockingHitMontage->GetPlayLength(), true))
@@ -77,7 +77,7 @@ void UCombatComponent::Block()
 {
 	if (StartEventTimer(BlockingMontage->GetPlayLength(), false))
 	{
-		UE_LOG(LogTemp, Log, TEXT("Block"));
+		LogMessage("Block");
 		bIsBlocking = true;
 		Owner->PlayAnimMontage(BlockingMontage);
 	}
@@ -120,7 +120,7 @@ bool UCombatComponent::StartEventTimer(float InRate, bool bCanBeOverriden)
 {
 	if (EventTimerActive() && !bCanBeOverriden)
 	{
-		UE_LOG(LogTemp, Log, TEXT("Event timer is active"));
+		LogMessage("Event timer is active");
 		return false;
 	}
 
@@ -128,6 +128,7 @@ bool UCombatComponent::StartEventTimer(float InRate, bool bCanBeOverriden)
 		ClearTimer();
 
 	GetWorld()->GetTimerManager().SetTimer(TimerHandle_EventTimer, this, &UCombatComponent::ClearTimer, InRate, false);
+	LogMessage(TEXT("Start event timer"));
 	return true;
 }
 
@@ -142,6 +143,7 @@ void UCombatComponent::ClearTimer()
 	Owner->GetCharacterMovement()->SetMovementMode(EMovementMode::MOVE_Walking);
 	bHitWasBlocked = false;
 	GetWorld()->GetTimerManager().ClearTimer(TimerHandle_EventTimer);
+	LogMessage("Clear event timer");
 }
 
 void UCombatComponent::PlayCombatAudio(int32 Type)
@@ -164,3 +166,7 @@ void UCombatComponent::PlayCombatAudio(int32 Type)
 	CombatAudio->Play();
 }
 
+void UCombatComponent::LogMessage(FString Message)
+{
+	UE_LOG(LogTemp, Log, TEXT("%s"), *Message);
+}

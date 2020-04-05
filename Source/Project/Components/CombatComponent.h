@@ -63,6 +63,8 @@ protected:
 
 	bool EventTimerActive();
 
+	void LogMessage(FString Message);
+
 public:	
 	
 	void Initialize(ACharacter* Owner, UAudioComponent* CombatAudioComp);
