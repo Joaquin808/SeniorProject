@@ -60,6 +60,8 @@ AProjectCharacter::AProjectCharacter()
 	CombatComponent = CreateDefaultSubobject<UCombatComponent>(TEXT("CombatComponent"));
 
 	CombatAudioComp = CreateDefaultSubobject<UAudioComponent>(TEXT("CombatAudioComp"));
+
+	DeathAudioComp = CreateDefaultSubobject<UAudioComponent>(TEXT("DeathAudioComp"));
 }
 
 void AProjectCharacter::BeginPlay()
@@ -349,10 +351,8 @@ void AProjectCharacter::InteractWithDoor()
 				if (PlayerHasKeyForDoor(Door))
 				{
 					Door->bIsDoorLocked = false;
+					// only play the door unlock sound and make the player open the door afterwards
 					Door->PlayDoorSound(EDoorType::Unlock);
-					Door->OpenDoor();
-					Door->PlayDoorSound(EDoorType::Closed);
-					Door->bDoorIsOpen = true;
 					GEngine->AddOnScreenDebugMessage(-1, 1.0f, FColor::Red, "Player has key");
 				}
 				else
@@ -537,6 +537,26 @@ void AProjectCharacter::UnHide()
 		PlayerController->SetViewTargetWithBlend(this, 0.5f);
 		bIsHiding = false;
 	}
+}
+
+void AProjectCharacter::DieToFollowAI()
+{
+	FVector LookAtLocation = FollowAI->GetActorLocation() - GetActorLocation();
+	LookAtLocation.Normalize();
+
+	FRotator NewLookAt = LookAtLocation.Rotation();
+	NewLookAt.Pitch = 0.0f;
+	NewLookAt.Roll = 0.0f;
+
+	PlayerController->SetControlRotation(NewLookAt);
+
+	DisableInput(PlayerController);
+	PlayerController->StopMovement();
+}
+
+void AProjectCharacter::PlayDeathAudio()
+{
+	DeathAudioComp->Play();
 }
 
 void AProjectCharacter::SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent)

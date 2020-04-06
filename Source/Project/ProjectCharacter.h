@@ -143,6 +143,9 @@ protected:
 	UPROPERTY(VisibleAnywhere)
 	class UAudioComponent* CombatAudioComp;
 
+	UPROPERTY(VisibleAnywhere)
+	class UAudioComponent* DeathAudioComp;
+
 public:
 
 	AProjectCharacter();
@@ -251,6 +254,10 @@ public:
 	void HitWasBlocked();
 
 	void BlockedHitDone();
+
+	void DieToFollowAI();
+
+	void PlayDeathAudio();
 
 	/** Returns Mesh1P subobject **/
 	//FORCEINLINE class USkeletalMeshComponent* GetMesh1P() const { return Mesh1P; }

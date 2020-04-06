@@ -33,6 +33,8 @@ AFollowAI::AFollowAI()
 
 	RandomAudioComp = CreateDefaultSubobject<UAudioComponent>(TEXT("RandomAudioComp"));
 
+	KillPlayerAudioComp = CreateDefaultSubobject<UAudioComponent>(TEXT("KillPlayerAudioComp"));
+
 	StencilValue = 2;
 
 	bPlayHearNoise = true;
@@ -202,6 +204,9 @@ void AFollowAI::CheckNotMoving()
 
 void AFollowAI::CheckLocation()
 {
+	if (bKilledPlayer)
+		return;
+
 	if (bDebugMessages)
 		UE_LOG(LogTemp, Log, TEXT("Check location"));
 
@@ -219,6 +224,11 @@ void AFollowAI::CheckLocation()
 		else
 		{
 			Patrol();
+		}
+
+		if (ChaseTimerActive())
+		{
+			ClearChaseTimer();
 		}
 
 		bIsPatroling = true;
@@ -239,8 +249,12 @@ void AFollowAI::ClearSeenPlayerTimer()
 
 void AFollowAI::OnPawnSeen(APawn* OtherActor)
 {
+	if (bKilledPlayer)
+		return;
+
 	if (bDebugMessages)
 		UE_LOG(LogTemp, Log, TEXT("OnPawnSeen"));
+
 	SeenPlayer = Cast<AProjectCharacter>(OtherActor);
 	if (SeenPlayer)
 	{
@@ -279,8 +293,76 @@ void AFollowAI::OnPawnSeen(APawn* OtherActor)
 		GetWorldTimerManager().SetTimer(TimerHandle_SeenPlayerTimer, this, &AFollowAI::ClearSeenPlayerTimer, SeenPlayerTimerLength);
 		GetCharacterMovement()->MaxWalkSpeed = ChaseWalkSpeed;
 		PawnSensingComp->SightRadius = FollowSightRadius;
-		UAIBlueprintHelperLibrary::SimpleMoveToLocation(GetController(), PlayerLocation);
+		ChasePlayer();
 	}
+}
+
+void AFollowAI::ChasePlayer()
+{
+	LogMessage("Chase Player");
+	UAIBlueprintHelperLibrary::SimpleMoveToLocation(GetController(), PlayerLocation);
+	bIsChasingPlayer = true;
+	if (ChaseTimerActive())
+	{
+		return;
+	}
+
+	GetWorldTimerManager().SetTimer(TimerHandle_ChasePlayer, this, &AFollowAI::CheckDistanceToTarget, 0.1f, true);
+}
+
+void AFollowAI::CheckDistanceToTarget()
+{
+	if (bIsChasingPlayer)
+	{
+		LogMessage("bIsChasingPlayer");
+		if (FVector::Dist(GetActorLocation(), PlayerReference->GetActorLocation()) <= KillPlayerDistance)
+		{
+			GetReadyToKillPlayer();
+			LogMessage("Close enough to kill player");
+		}
+	}
+}
+
+bool AFollowAI::ChaseTimerActive()
+{
+	return GetWorldTimerManager().IsTimerActive(TimerHandle_ChasePlayer);
+}
+
+void AFollowAI::ClearChaseTimer()
+{
+	LogMessage("Clear chase timer");
+	bIsChasingPlayer = false;
+	GetWorldTimerManager().ClearTimer(TimerHandle_ChasePlayer);
+}
+
+void AFollowAI::GetReadyToKillPlayer()
+{
+	if (bKilledPlayer || !bGameCanEnd)
+		return;
+
+	bKilledPlayer = true;
+	GetController()->StopMovement();
+
+	PlayerReference->DieToFollowAI();
+
+	OutlineAI(true);
+
+	FTimerHandle TimerHandle_KillPlayerTimer;
+	GetWorldTimerManager().SetTimer(TimerHandle_KillPlayerTimer, this, &AFollowAI::KillPlayer, KillPlayerAudioComp->Sound->GetDuration());
+	KillPlayerAudioComp->Play();
+}
+
+void AFollowAI::KillPlayer()
+{
+	StopAnimMontage();
+	FTimerHandle TimerHandle_GameOverScreen;
+	GetWorldTimerManager().SetTimer(TimerHandle_GameOverScreen, this, &AFollowAI::ShowGameOverScreen, PlayAnimMontage(KillPlayerMontage, KillMontageRate));
+	PlayerReference->PlayDeathAudio();
+}
+
+void AFollowAI::ShowGameOverScreen()
+{
+	// displays the game over screen
 }
 
 void AFollowAI::OnHearPawn(APawn* OtherActor, const FVector& Location, float Volume)
@@ -485,6 +567,8 @@ void AFollowAI::OutlineAI(bool bOutlineAI)
 		bAIOutlined = true;
 		break;
 	case false:
+		if (bKilledPlayer)
+			break;
 		GetMesh()->SetRenderCustomDepth(false);
 		GetMesh()->SetCustomDepthStencilValue(0);
 		bAIOutlined = false;
@@ -505,4 +589,10 @@ void AFollowAI::OutlineFeet(bool bOutlineFeet)
 		FeetOutline->SetCustomDepthStencilValue(0);
 		break;
 	}
+}
+
+void AFollowAI::LogMessage(FString Message)
+{
+	if (bDebugMessages)
+		UE_LOG(LogTemp, Log, TEXT("%s"), *Message);
 }

@@ -155,7 +155,30 @@ protected:
 	class USoundCue* VentSoundCue;
 
 	UPROPERTY(EditDefaultsOnly)
+	float KillPlayerDistance;
+
+	bool bIsChasingPlayer;
+
+	FTimerHandle TimerHandle_ChasePlayer;
+
+	UPROPERTY(EditDefaultsOnly)
+	UAnimMontage* KillPlayerMontage;
+
+	bool bKilledPlayer;
+
+	UPROPERTY(EditDefaultsOnly, meta = (ClampMin = "0.0", ClampMax = "1.0"))
+	float KillMontageRate;
+
+	FVector KillLocation;
+
+	UPROPERTY(VisibleAnywhere)
+	UAudioComponent* KillPlayerAudioComp;
+
+	UPROPERTY(EditDefaultsOnly)
 	bool bDebugMessages;
+
+	UPROPERTY(EditDefaultsOnly)
+	bool bGameCanEnd;
 
 public:
 	// Sets default values for this character's properties
@@ -190,6 +213,14 @@ protected:
 	UFUNCTION()
 	void OnPawnSeen(APawn* OtherActor);
 
+	void ChasePlayer();
+
+	void CheckDistanceToTarget();
+
+	bool ChaseTimerActive();
+
+	void ClearChaseTimer();
+
 	UFUNCTION()
 	void OnHearPawn(APawn* OtherActor, const FVector& Location, float Volume);
 
@@ -218,6 +249,14 @@ protected:
 	bool AudioTimerActive();
 
 	void PlayVentAudio();
+
+	void GetReadyToKillPlayer();
+
+	void KillPlayer();
+
+	void ShowGameOverScreen();
+
+	void LogMessage(FString Message);
 
 public:	
 
