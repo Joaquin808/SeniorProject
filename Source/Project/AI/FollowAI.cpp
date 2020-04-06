@@ -363,6 +363,7 @@ void AFollowAI::KillPlayer()
 void AFollowAI::ShowGameOverScreen()
 {
 	// displays the game over screen
+	UGameplayStatics::OpenLevel(GetWorld(), FName{ TEXT("GameOver") });
 }
 
 void AFollowAI::OnHearPawn(APawn* OtherActor, const FVector& Location, float Volume)
