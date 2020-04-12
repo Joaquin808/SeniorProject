@@ -20,6 +20,9 @@ protected:
 
 	USceneComponent* DefaultRoot;
 
+	UPROPERTY(VisibleAnywhere)
+	class UBoxComponent* BoxComp;
+
 	UPROPERTY(EditAnywhere)
 	int32 StencilValue;
 

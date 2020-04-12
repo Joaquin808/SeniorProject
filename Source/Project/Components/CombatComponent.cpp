@@ -7,6 +7,8 @@
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Components/AudioComponent.h"
 #include "ProjectCharacter.h"
+#include "UI/CombatUI.h"
+#include "AI/BossAI.h"
 
 // Sets default values for this component's properties
 UCombatComponent::UCombatComponent()
@@ -27,12 +29,17 @@ void UCombatComponent::BeginPlay()
 
 }
 
-void UCombatComponent::Initialize(ACharacter* Owner, UAudioComponent* CombatAudioComp)
+void UCombatComponent::Initialize(ACharacter* Owner, UAudioComponent* CombatAudioComp, UCombatUI* HealthBar)
 {
-	if (Owner && CombatAudioComp)
+	if (Owner != nullptr && CombatAudioComp != nullptr)
 	{
 		this->Owner = Owner;
 		this->CombatAudio = CombatAudioComp;
+		if (HealthBar)
+		{
+			this->HealthBar = HealthBar;
+			SetHealthBar();
+		}
 	}
 }
 
@@ -44,11 +51,14 @@ bool UCombatComponent::TakeDamage(float Damage)
 		if (StartEventTimer(BlockingHitMontage->GetPlayLength(), true))
 			Owner->PlayAnimMontage(BlockingHitMontage);
 		bBlockedHit = true;
+		PlayCombatAudio(2);
 		return false;
 	}
 	else
 	{
 		Health = FMath::Clamp(Health - Damage, 0.0f, MaxHealth);
+		PlayCombatAudio(1);
+		SetHealthBar();
 		return true;
 	}
 }
@@ -137,8 +147,15 @@ bool UCombatComponent::EventTimerActive()
 	return GetWorld()->GetTimerManager().IsTimerActive(TimerHandle_EventTimer);
 }
 
+void UCombatComponent::SetHealthBar()
+{
+	HealthBar->SetHealthBar(Health, MaxHealth);
+}
+
 void UCombatComponent::ClearTimer()
 {
+	if (Owner == Cast<ABossAI>(Owner))
+		UnBlock();
 	bIsAttacking = false;
 	Owner->GetCharacterMovement()->SetMovementMode(EMovementMode::MOVE_Walking);
 	bHitWasBlocked = false;
@@ -158,6 +175,16 @@ void UCombatComponent::PlayCombatAudio(int32 Type)
 		else
 		{
 			CombatAudio->SetBoolParameter(FName{ TEXT("Player") }, false);
+		}
+		break;
+	case 1:
+		if (Owner == Cast<AProjectCharacter>(UGameplayStatics::GetPlayerCharacter(this, 0)))
+		{
+			CombatAudio->SetBoolParameter(FName{ TEXT("PlayerDamage") }, true);
+		}
+		else
+		{
+			CombatAudio->SetBoolParameter(FName{ TEXT("PlayerDamage") }, false);
 		}
 		break;
 	}

@@ -146,6 +146,9 @@ protected:
 	UPROPERTY(VisibleAnywhere)
 	class UAudioComponent* DeathAudioComp;
 
+	UPROPERTY(BlueprintReadWrite)
+	class UCombatUI* HealthBar;
+
 public:
 
 	AProjectCharacter();
@@ -230,6 +233,8 @@ protected:
 	void Hide();
 
 	void UnHide();
+
+	void OutlineMeshAndSword();
 
 	UFUNCTION()
 	void OnOverlapBegin(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);

@@ -55,6 +55,8 @@ public:
 
 	class UAudioComponent* CombatAudio;
 
+	class UCombatUI* HealthBar;
+
 protected:
 	// Called when the game starts
 	virtual void BeginPlay() override;
@@ -63,11 +65,13 @@ protected:
 
 	bool EventTimerActive();
 
+	void SetHealthBar();
+
 	void LogMessage(FString Message);
 
 public:	
 	
-	void Initialize(ACharacter* Owner, UAudioComponent* CombatAudioComp);
+	void Initialize(ACharacter* Owner, UAudioComponent* CombatAudioComp, class UCombatUI* HealthBar);
 
 	bool TakeDamage(float Damage);
 

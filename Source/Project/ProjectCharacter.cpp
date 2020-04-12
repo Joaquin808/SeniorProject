@@ -25,6 +25,7 @@
 #include "Engine/Engine.h"
 #include "Pickups/Keys/DoorKey.h"
 #include "Components/AudioComponent.h"
+#include "UI/CombatUI.h"
 
 //////////////////////////////////////////////////////////////////////////
 // AProjectCharacter
@@ -78,7 +79,7 @@ void AProjectCharacter::BeginPlay()
 		Light->SetActorLocation(GetActorLocation() + FVector(0, 0, LightHeight));
 	}
 
-	CombatComponent->Initialize(this, CombatAudioComp);
+	CombatComponent->Initialize(this, CombatAudioComp, HealthBar);
 
 	// I need the mesh hidden when were in the official map for the horror process, but need it visible in the BossMap for animations
 	if (UGameplayStatics::GetCurrentLevelName(this) == "Official")
@@ -88,6 +89,7 @@ void AProjectCharacter::BeginPlay()
 	else if (UGameplayStatics::GetCurrentLevelName(this) == "BossMap")
 	{
 		GetMesh()->SetHiddenInGame(false);
+		OutlineMeshAndSword();
 
 		// Spawn weapon if we're in the boss map and change the players stance to combat
 		if (Weapon)
@@ -108,6 +110,9 @@ void AProjectCharacter::BeginPlay()
 			Weapon->SetOwner(this);
 			Stance = EStance::Combat;
 		}
+
+		if (bDebugMode && BossAIReference)
+			BossAIReference->EnableOutlineEffect();
 	}
 
 	FTimerHandle TimerHandle_CheckForInteractions;
@@ -188,7 +193,8 @@ void AProjectCharacter::Ability()
 
 	if (bOutlineObjects)
 	{
-		DrawDebugSphere(GetWorld(), End, SphereRadius, 100, FColor::Red, false, 1.0f);
+		if (bDebugMode)
+			DrawDebugSphere(GetWorld(), End, SphereRadius, 100, FColor::Red, false, 1.0f);
 		if (GetWorld()->SweepMultiByChannel(HitResults, Start, End, FQuat::Identity, ECC_WorldDynamic, Sphere, QueryParams))
 		{
 			//UE_LOG(LogTemp, Log, TEXT("Hit something"));
@@ -504,9 +510,6 @@ void AProjectCharacter::UpdateFPS()
 	// I imagine i'll need to know my current FPS to alter how the game operates at certain times
 	FPS = 1.0f / DeltaTime;
 	GetWorldTimerManager().ClearTimer(TimerHandle_FPSTimer);
-	FString String = FString::SanitizeFloat(FPS);
-	if(bDebugMode)
-		GEngine->AddOnScreenDebugMessage(1, 0.5f, FColor::Blue, String);
 }
 
 void AProjectCharacter::InteractWithHidingSpot()
@@ -536,6 +539,18 @@ void AProjectCharacter::UnHide()
 	{
 		PlayerController->SetViewTargetWithBlend(this, 0.5f);
 		bIsHiding = false;
+	}
+}
+
+void AProjectCharacter::OutlineMeshAndSword()
+{
+	GetMesh()->SetRenderCustomDepth(true);
+	GetMesh()->SetCustomDepthStencilValue(2);
+
+	if (Weapon)
+	{
+		Weapon->SwordMesh->SetRenderCustomDepth(true);
+		Weapon->SwordMesh->SetCustomDepthStencilValue(2);
 	}
 }
 

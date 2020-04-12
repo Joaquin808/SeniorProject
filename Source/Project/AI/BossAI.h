@@ -63,6 +63,9 @@ protected:
 	UPROPERTY(VisibleAnywhere)
 	class UAudioComponent* CombatAudioComp;
 
+	UPROPERTY(BlueprintReadWrite)
+	class UCombatUI* HealthBar;
+
 public:
 	// Sets default values for this character's properties
 	ABossAI();

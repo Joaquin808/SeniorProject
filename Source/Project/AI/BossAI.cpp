@@ -12,6 +12,7 @@
 #include "Components/CombatComponent.h"
 #include "Components/AudioComponent.h"
 #include "Components/SkeletalMeshComponent.h"
+#include "UI/CombatUI.h"
 
 // Sets default values
 ABossAI::ABossAI()
@@ -47,7 +48,7 @@ void ABossAI::BeginPlay()
 		Weapon->SetOwner(this);
 	}
 
-	CombatComponent->Initialize(this, CombatAudioComp);
+	CombatComponent->Initialize(this, CombatAudioComp, HealthBar);
 
 	PlayerReference = Cast<AProjectCharacter>(UGameplayStatics::GetPlayerCharacter(this, 0));
     PlayerReference->BossAIReference = this;
@@ -286,6 +287,9 @@ void ABossAI::EnableOutlineEffect()
 
 void ABossAI::DisableOutlineEffect()
 {
+	if (PlayerReference->bDebugMode)
+		return;
+
 	GetMesh()->SetRenderCustomDepth(false);
 	GetMesh()->SetCustomDepthStencilValue(0);
 

@@ -2,6 +2,7 @@
 #include "DoorKey.h"
 #include "Components/StaticMeshComponent.h"
 #include "Components/SceneComponent.h"
+#include "Components/BoxComponent.h"
 
 ADoorKey::ADoorKey()
 {
@@ -10,6 +11,9 @@ ADoorKey::ADoorKey()
 
 	KeyMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("KeyMesh"));
 	KeyMesh->SetupAttachment(RootComponent);
+
+	BoxComp = CreateDefaultSubobject<UBoxComponent>(TEXT("BoxComp"));
+	BoxComp->SetupAttachment(KeyMesh);
 
 	StencilValue = 2;
 }
