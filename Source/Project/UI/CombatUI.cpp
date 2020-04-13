@@ -4,5 +4,6 @@
 
 void UCombatUI::SetHealthBar(float Health, float MaxHealth)
 {
-	HealthBar->SetPercent(MaxHealth / Health);
+	this->Health = Health;
+	this->MaxHealth = MaxHealth;
 }

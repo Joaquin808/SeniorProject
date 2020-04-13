@@ -42,8 +42,6 @@ protected:
 	UPROPERTY(EditDefaultsOnly)
 	float AttackDistance;
 
-	AActor* Owner;
-
 	UPROPERTY(EditDefaultsOnly)
 	float Damage;
 
@@ -56,6 +54,8 @@ public:
 
 	UPROPERTY(VisibleAnywhere)
 	UStaticMeshComponent* SwordMesh;
+
+	AActor* Owner;
 
 protected:
 

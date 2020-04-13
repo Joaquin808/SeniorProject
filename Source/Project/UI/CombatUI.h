@@ -16,6 +16,12 @@ public:
 	UPROPERTY(meta = (BindWidgetOptional))
 	class UProgressBar* HealthBar;
 
+	UPROPERTY(BlueprintReadOnly)
+	float MaxHealth;
+
+	UPROPERTY(BlueprintReadOnly)
+	float Health;
+
 public:
 
 	void SetHealthBar(float Health, float MaxHealth);

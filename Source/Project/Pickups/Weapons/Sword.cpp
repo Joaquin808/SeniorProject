@@ -52,7 +52,7 @@ void ASword::BeginPlay()
 	CollisionBoxes.Add(Collision4);
 	CollisionBoxes.Add(Collision5);
 
-	Owner = GetOwner();
+	//Owner = GetOwner();
 }
 
 void ASword::Attack()
@@ -70,7 +70,7 @@ void ASword::Attack()
 		if (GetWorld()->LineTraceSingleByChannel(Hit, Start, End, ECC_Visibility, QueryParams))
 		{
 			auto Interface = Cast<ICombatInterface>(Hit.GetActor());
-			if (Interface)
+			if (Interface && Hit.GetActor() != Owner)
 			{
 				if (HitActors.Contains(Hit.GetActor()))
 				{
@@ -86,7 +86,7 @@ void ASword::Attack()
 		
 		if (bDrawDebugLines)
 		{
-			DrawDebugLine(GetWorld(), Start, End, FColor::Red, false, 1.0f);
+			DrawDebugLine(GetWorld(), Start, End, FColor::Red, false, 0.2f);
 		}
 	}
 }

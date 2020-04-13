@@ -27,6 +27,7 @@ void UCombatComponent::BeginPlay()
 
 	Health = MaxHealth;
 
+	Player = Cast<AProjectCharacter>(UGameplayStatics::GetPlayerCharacter(this, 0));
 }
 
 void UCombatComponent::Initialize(ACharacter* Owner, UAudioComponent* CombatAudioComp, UCombatUI* HealthBar)
@@ -45,7 +46,7 @@ void UCombatComponent::Initialize(ACharacter* Owner, UAudioComponent* CombatAudi
 
 bool UCombatComponent::TakeDamage(float Damage)
 {
-	LogMessage("Damage done to BossAI");
+	//LogMessage("Damage done to BossAI");
 	if (bIsBlocking)
 	{
 		if (StartEventTimer(BlockingHitMontage->GetPlayLength(), true))
@@ -56,7 +57,9 @@ bool UCombatComponent::TakeDamage(float Damage)
 	}
 	else
 	{
-		Health = FMath::Clamp(Health - Damage, 0.0f, MaxHealth);
+		Health = Health - Damage;//FMath::Clamp(Health - Damage, 0.0f, MaxHealth);
+		if (Health <= 0)
+			Die();
 		PlayCombatAudio(1);
 		SetHealthBar();
 		return true;
@@ -87,7 +90,7 @@ void UCombatComponent::Block()
 {
 	if (StartEventTimer(BlockingMontage->GetPlayLength(), false))
 	{
-		LogMessage("Block");
+		//LogMessage("Block");
 		bIsBlocking = true;
 		Owner->PlayAnimMontage(BlockingMontage);
 	}
@@ -130,7 +133,7 @@ bool UCombatComponent::StartEventTimer(float InRate, bool bCanBeOverriden)
 {
 	if (EventTimerActive() && !bCanBeOverriden)
 	{
-		LogMessage("Event timer is active");
+		//LogMessage("Event timer is active");
 		return false;
 	}
 
@@ -138,7 +141,7 @@ bool UCombatComponent::StartEventTimer(float InRate, bool bCanBeOverriden)
 		ClearTimer();
 
 	GetWorld()->GetTimerManager().SetTimer(TimerHandle_EventTimer, this, &UCombatComponent::ClearTimer, InRate, false);
-	LogMessage(TEXT("Start event timer"));
+	//LogMessage(TEXT("Start event timer"));
 	return true;
 }
 
@@ -149,7 +152,13 @@ bool UCombatComponent::EventTimerActive()
 
 void UCombatComponent::SetHealthBar()
 {
-	HealthBar->SetHealthBar(Health, MaxHealth);
+	if (HealthBar)
+		HealthBar->SetHealthBar(Health, MaxHealth);
+}
+
+void UCombatComponent::Die()
+{
+	UGameplayStatics::OpenLevel(GetWorld(), FName{ TEXT("GameOver") });
 }
 
 void UCombatComponent::ClearTimer()
@@ -160,7 +169,7 @@ void UCombatComponent::ClearTimer()
 	Owner->GetCharacterMovement()->SetMovementMode(EMovementMode::MOVE_Walking);
 	bHitWasBlocked = false;
 	GetWorld()->GetTimerManager().ClearTimer(TimerHandle_EventTimer);
-	LogMessage("Clear event timer");
+	//LogMessage("Clear event timer");
 }
 
 void UCombatComponent::PlayCombatAudio(int32 Type)

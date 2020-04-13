@@ -57,6 +57,11 @@ public:
 
 	class UCombatUI* HealthBar;
 
+	UPROPERTY(EditDefaultsOnly)
+	UAnimMontage* DeathMontage;
+
+	 class AProjectCharacter* Player;
+
 protected:
 	// Called when the game starts
 	virtual void BeginPlay() override;
@@ -66,6 +71,8 @@ protected:
 	bool EventTimerActive();
 
 	void SetHealthBar();
+
+	void Die();
 
 	void LogMessage(FString Message);
 

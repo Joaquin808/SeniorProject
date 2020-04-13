@@ -45,7 +45,7 @@ void ABossAI::BeginPlay()
 		FString AttachmentSocket = "Socket_Weapon";
 		FName SocketName = FName(*AttachmentSocket);
 		Weapon->AttachToComponent(GetMesh(), FAttachmentTransformRules::SnapToTargetIncludingScale, SocketName);
-		Weapon->SetOwner(this);
+		Weapon->Owner = this;
 	}
 
 	CombatComponent->Initialize(this, CombatAudioComp, HealthBar);
@@ -67,7 +67,7 @@ void ABossAI::ApproachPlayer()
 		return;
 	}
 
-	LogMessage("Approach player");
+	//LogMessage("Approach player");
 	UAIBlueprintHelperLibrary::SimpleMoveToLocation(GetController(), PlayerReference->GetActorLocation() - FVector(50, 0, 0));
 }
 
@@ -196,7 +196,7 @@ void ABossAI::MoveAroundPlayer()
 	// if the target is not equal to nullptr, simply move to the current location of the current target (RoamingPoints)
 	if (Target != nullptr)
 	{
-		LogMessage("Move Around Player");
+		//LogMessage("Move Around Player");
 		AIMoveToLocation = Target->GetActorLocation();
 		UAIBlueprintHelperLibrary::SimpleMoveToLocation(GetController(), AIMoveToLocation);
 	}
@@ -213,7 +213,7 @@ void ABossAI::StartRoamingTimer()
 		return;
 	}
 
-	LogMessage("StartRoamingTimer");
+	//LogMessage("StartRoamingTimer");
 	GetWorldTimerManager().SetTimer(TimerHandle_MoveAroundPlayer, this, &ABossAI::MoveAroundPlayer, 1.5f, true);
 }
 
@@ -228,7 +228,7 @@ void ABossAI::StopRoamingTimer()
 	{
 		if (FVector::Dist(GetActorLocation(), AIMoveToLocation) <= 50)
 		{
-			LogMessage("StopRoamingTimer");
+			//LogMessage("StopRoamingTimer");
 			GetWorldTimerManager().ClearTimer(CombatComponent->TimerHandle_EventTimer);
 			return;
 		}
@@ -238,7 +238,7 @@ void ABossAI::StopRoamingTimer()
 		}
 	}
 
-	LogMessage("StopRoamingTimer");
+	//LogMessage("StopRoamingTimer");
 	GetWorldTimerManager().ClearTimer(CombatComponent->TimerHandle_EventTimer);
 }
 
@@ -263,7 +263,7 @@ void ABossAI::Damage(float Damage)
 {
 	if (CombatComponent->TakeDamage(Damage))
 	{
-
+		LogMessage("BossAI was damaged");
 	}
 	else
 	{
@@ -271,6 +271,11 @@ void ABossAI::Damage(float Damage)
 		CombatChoice();
 	}
 	
+}
+
+void ABossAI::HitWasBlocked()
+{
+	CombatComponent->HitWasBlocked();
 }
 
 void ABossAI::EnableOutlineEffect()

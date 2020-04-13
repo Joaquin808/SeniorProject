@@ -107,7 +107,7 @@ void AProjectCharacter::BeginPlay()
 			FString AttachmentSocket = "Socket_Weapon";
 			FName SocketName = FName(*AttachmentSocket);
 			Weapon->AttachToComponent(GetMesh(), FAttachmentTransformRules::SnapToTargetIncludingScale, SocketName);
-			Weapon->SetOwner(this);
+			Weapon->Owner = this;
 			Stance = EStance::Combat;
 		}
 
@@ -155,8 +155,14 @@ void AProjectCharacter::UnBlock()
 
 void AProjectCharacter::Damage(float Damage)
 {
-	UE_LOG(LogTemp, Log, TEXT("Damage done to player"));
-	CombatComponent->TakeDamage(Damage);
+	if (CombatComponent->TakeDamage(Damage))
+	{
+		UE_LOG(LogTemp, Log, TEXT("Damage done to player"));
+	}
+	else
+	{
+		BossAIReference->HitWasBlocked();
+	}
 }
 
 void AProjectCharacter::Ability()

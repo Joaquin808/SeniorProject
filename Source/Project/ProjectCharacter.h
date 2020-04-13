@@ -138,8 +138,6 @@ protected:
 
 	class APickup* FoundPickup;
 
-	APlayerController* PlayerController;
-
 	UPROPERTY(VisibleAnywhere)
 	class UAudioComponent* CombatAudioComp;
 
@@ -182,6 +180,8 @@ public:
 	AActor* HidingSpot;
 
 	bool bIsInRoom;
+
+	APlayerController* PlayerController;
 
 protected:
 
