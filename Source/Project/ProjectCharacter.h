@@ -183,6 +183,8 @@ public:
 
 	APlayerController* PlayerController;
 
+	int NumberOfKeysInGame;
+
 protected:
 
 	virtual void BeginPlay();
@@ -263,6 +265,8 @@ public:
 	void DieToFollowAI();
 
 	void PlayDeathAudio();
+
+	bool PlayerHasAllKeys();
 
 	/** Returns Mesh1P subobject **/
 	//FORCEINLINE class USkeletalMeshComponent* GetMesh1P() const { return Mesh1P; }

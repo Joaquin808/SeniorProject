@@ -577,6 +577,20 @@ void AFollowAI::OutlineAI(bool bOutlineAI)
 	}
 }
 
+void AFollowAI::EndGameChasePlayer()
+{
+	JumpOutVent();
+	bIsPatroling = false;
+	bSawPlayer = true;
+	bLostPlayer = false;
+	PlayerLocation = PlayerReference->GetActorLocation();
+	if (GetWorldTimerManager().IsTimerActive(TimerHandle_SeenPlayerTimer))
+		ClearSeenPlayerTimer();
+	GetCharacterMovement()->MaxWalkSpeed = ChaseWalkSpeed;
+	PawnSensingComp->SightRadius = FollowSightRadius;
+	ChasePlayer();
+}
+
 void AFollowAI::OutlineFeet(bool bOutlineFeet)
 {
 	switch (bOutlineFeet)

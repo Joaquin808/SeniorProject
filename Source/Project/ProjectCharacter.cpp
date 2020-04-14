@@ -119,6 +119,14 @@ void AProjectCharacter::BeginPlay()
 	GetWorldTimerManager().SetTimer(TimerHandle_CheckForInteractions, this, &AProjectCharacter::CheckForInteractions, 0.1f, true);
 
 	PlayerController = Cast<APlayerController>(UGameplayStatics::GetPlayerController(this, 0));
+
+	NumberOfKeysInGame = 0;
+	TArray<AActor*> KeysInGame;
+	UGameplayStatics::GetAllActorsOfClass(GetWorld(), ADoorKey::StaticClass(), KeysInGame);
+	for (int32 i = 0; i < KeysInGame.Num(); i++)
+	{
+		NumberOfKeysInGame++;
+	}
 }
 
 void AProjectCharacter::Attack()
@@ -360,6 +368,23 @@ void AProjectCharacter::InteractWithDoor()
 			// I'll add a sound effect and a animation of a locked door trying to be opened
 			if (Door->bIsDoorLocked)
 			{
+				if (Door->bIsMasterDoor)
+				{
+					if (PlayerHasAllKeys())
+					{
+						Door->bIsDoorLocked = false;
+						// only play the door unlock sound and make the player open the door afterwards
+						Door->PlayDoorSound(EDoorType::Unlock);
+						GEngine->AddOnScreenDebugMessage(-1, 1.0f, FColor::Red, "Player has all the keys");
+						break;
+					}
+					else
+					{
+						Door->PlayDoorSound(EDoorType::Locked);
+						break;
+					}
+				}
+
 				if (PlayerHasKeyForDoor(Door))
 				{
 					Door->bIsDoorLocked = false;
@@ -439,6 +464,14 @@ void AProjectCharacter::InteractWithPickups()
 			FoundPickup->Destroy();
 			FoundPickup = nullptr;
 			GEngine->AddOnScreenDebugMessage(-1, 1.0f, FColor::Red, "Key added");
+
+			if (PlayerHasAllKeys())
+			{
+				if (FollowAI)
+				{
+					FollowAI->EndGameChasePlayer();
+				}
+			}
 		}
 	}
 }
@@ -578,6 +611,11 @@ void AProjectCharacter::DieToFollowAI()
 void AProjectCharacter::PlayDeathAudio()
 {
 	DeathAudioComp->Play();
+}
+
+bool AProjectCharacter::PlayerHasAllKeys()
+{
+	return Inventory.Num() == NumberOfKeysInGame;
 }
 
 void AProjectCharacter::SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent)

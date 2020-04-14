@@ -262,4 +262,7 @@ public:
 
 	void OutlineAI(bool bOutlineAI);
 
+	// called when the player has retrieved all of the keys
+	void EndGameChasePlayer();
+
 };
