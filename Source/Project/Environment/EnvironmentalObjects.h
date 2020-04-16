@@ -36,6 +36,9 @@ protected:
 
 	FCollisionResponseContainer DefaultCollisionRespones;
 
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
+	class UAudioComponent* CarStartAudioComp;
+
 public:	
 	// Sets default values for this actor's properties
 	AEnvironmentalObjects();
@@ -70,6 +73,9 @@ public:
 	UPROPERTY(EditAnywhere)
 	bool bIsMasterDoor;
 
+	UPROPERTY(EditAnywhere)
+	bool bIsGameEndCar;
+
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
@@ -78,7 +84,7 @@ public:
 
 	void EnableOutlineEffect();
 
-	void RemoveOutlineEffect();
+	virtual void RemoveOutlineEffect();
 
 	UFUNCTION(BlueprintImplementableEvent)
 	void OpenDoor();
@@ -95,5 +101,7 @@ public:
 	void DoorIsClosed();
 
 	void PlayDoorSound(EDoorType DoorType);
+
+	float PlayCarAudio();
 
 };

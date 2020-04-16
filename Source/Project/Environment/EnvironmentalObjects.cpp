@@ -19,6 +19,8 @@ AEnvironmentalObjects::AEnvironmentalObjects()
 
 	DoorAudioComp = CreateDefaultSubobject<UAudioComponent>(TEXT("FootstepAudioComp"));
 
+	CarStartAudioComp = CreateDefaultSubobject<UAudioComponent>(TEXT("CarStartAudioComp"));
+
 	StencilValue = 2;
 }
 
@@ -162,5 +164,11 @@ void AEnvironmentalObjects::PlayDoorSound(EDoorType DoorType)
 
 	DoorAudioComp->SetIntParameter(FName{ TEXT("Sound") }, ParamNumber);
 	DoorAudioComp->Play();
+}
+
+float AEnvironmentalObjects::PlayCarAudio()
+{
+	CarStartAudioComp->Play();
+	return CarStartAudioComp->Sound->GetDuration();
 }
 

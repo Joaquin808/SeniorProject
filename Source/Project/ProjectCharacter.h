@@ -147,6 +147,11 @@ protected:
 	UPROPERTY(BlueprintReadWrite)
 	class UCombatUI* HealthBar;
 
+	UPROPERTY(EditDefaultsOnly)
+	bool bGameEndWithCar;
+
+	class AEnvironmentalObjects* Car;
+
 public:
 
 	AProjectCharacter();
@@ -183,7 +188,13 @@ public:
 
 	APlayerController* PlayerController;
 
-	int NumberOfKeysInGame;
+	int32 NumberOfKeysInGame;
+
+	TArray<AActor*> ActiveDistractions;
+
+	class ADistraction* Distraction;
+
+	TArray<class ADistraction*> RenderedDistractions;
 
 protected:
 
@@ -243,6 +254,18 @@ protected:
 
 	UFUNCTION()
 	void OnOverlapEnd(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex);
+
+	void StartCheckForCarTimer();
+
+	void CheckForCar();
+
+	void InteractWithCar();
+
+	void CheckForDistractions();
+
+	void InteractWithDistractions();
+
+	void LoadWinGameScreen();
 
 	/** Handles moving forward/backward */
 	void MoveForward(float Val);

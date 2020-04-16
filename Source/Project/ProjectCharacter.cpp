@@ -26,6 +26,7 @@
 #include "Pickups/Keys/DoorKey.h"
 #include "Components/AudioComponent.h"
 #include "UI/CombatUI.h"
+#include "Actors/Distraction.h"
 
 //////////////////////////////////////////////////////////////////////////
 // AProjectCharacter
@@ -233,6 +234,13 @@ void AProjectCharacter::Ability()
 				{
 					FollowAI->OutlineAI(true);
 				}
+				
+				auto Distraction = Cast<ADistraction>(HitResults[i].GetActor());
+				if (Distraction)
+				{
+					Distraction->EnableOutlineEffect();
+					RenderedDistractions.Add(Distraction);
+				}
 			}
 		}
 	}
@@ -273,6 +281,13 @@ void AProjectCharacter::SonarCooldown()
 		{
 			FollowAI->OutlineAI(false);
 		}
+
+		for (auto Distraction : RenderedDistractions)
+		{
+			Distraction->RemoveOutlineEffect();
+		}
+
+		RenderedDistractions.Empty();
 	}
 
 	if (AbilityLight)
@@ -311,6 +326,7 @@ void AProjectCharacter::CheckForInteractions()
 {
 	CheckForDoors();
 	CheckForPickups();
+	CheckForDistractions();
 }
 
 void AProjectCharacter::Interact()
@@ -318,6 +334,8 @@ void AProjectCharacter::Interact()
 	InteractWithDoor();
 	InteractWithPickups();
 	InteractWithHidingSpot();
+	InteractWithCar();
+	InteractWithDistractions();
 }
 
 void AProjectCharacter::CheckForDoors()
@@ -465,12 +483,21 @@ void AProjectCharacter::InteractWithPickups()
 			FoundPickup = nullptr;
 			GEngine->AddOnScreenDebugMessage(-1, 1.0f, FColor::Red, "Key added");
 
-			if (PlayerHasAllKeys())
+			if (PlayerHasAllKeys() && !bGameEndWithCar)
 			{
 				if (FollowAI)
 				{
 					FollowAI->EndGameChasePlayer();
 				}
+			}
+
+			if (bGameEndWithCar)
+			{
+				Inventory.Contains("Car");
+				UE_LOG(LogTemp, Log, TEXT("Player has car key"));
+				StartCheckForCarTimer();
+				//if (FollowAI)
+					//FollowAI->EndGameChasePlayer();
 			}
 		}
 	}
@@ -528,6 +555,112 @@ void AProjectCharacter::OnOverlapEnd(UPrimitiveComponent * OverlappedComp, AActo
 		Object->bWasRanInto = false;
 		Object->RemoveOutlineEffect();
 	}
+}
+
+void AProjectCharacter::StartCheckForCarTimer()
+{
+	FTimerHandle TimerHandle_CheckForGameEndCar;
+	GetWorldTimerManager().SetTimer(TimerHandle_CheckForGameEndCar, this, &AProjectCharacter::CheckForCar, 0.1f, true);
+}
+
+void AProjectCharacter::CheckForCar()
+{
+	TArray<FHitResult> HitResults;
+
+	FVector Start = FirstPersonCameraComponent->GetComponentLocation();
+	FVector End = Start + (FirstPersonCameraComponent->GetForwardVector() * LineTraceDistance);
+
+	FCollisionShape Sphere = FCollisionShape::MakeSphere(KeySphereRadius);
+
+	FCollisionQueryParams QueryParams;
+	QueryParams.AddIgnoredActor(this);
+
+	if (GetWorld()->SweepMultiByChannel(HitResults, Start, End, FQuat::Identity, ECollisionChannel::ECC_Visibility, Sphere, QueryParams))
+	{
+		for (int32 i = 0; i < HitResults.Num(); i++)
+		{
+			auto Car = Cast<AEnvironmentalObjects>(HitResults[i].GetActor());
+			if (Car && Car->bIsGameEndCar)
+			{
+				this->Car = Car;
+				this->Car->EnableOutlineEffect();
+			}
+			else
+			{
+				if (this->Car)
+				{
+					this->Car->RemoveOutlineEffect();
+					this->Car = nullptr;
+				}
+			}
+			
+		}
+	}
+}
+
+void AProjectCharacter::InteractWithCar()
+{
+	if (Car && bGameEndWithCar)
+	{
+		UE_LOG(LogTemp, Log, TEXT("Interacted with car"));
+		FTimerHandle TimerHandle_WinGameTimer;
+		GetWorldTimerManager().SetTimer(TimerHandle_WinGameTimer, this, &AProjectCharacter::LoadWinGameScreen, Car->PlayCarAudio());
+	}
+}
+
+void AProjectCharacter::CheckForDistractions()
+{
+	FHitResult HitResult;
+
+	FVector Start = FirstPersonCameraComponent->GetComponentLocation();
+	FVector End = Start + (FirstPersonCameraComponent->GetForwardVector() * LineTraceDistance);
+
+	FCollisionQueryParams QueryParams;
+	QueryParams.AddIgnoredActor(this);
+
+	if (GetWorld()->LineTraceSingleByChannel(HitResult, Start, End, ECollisionChannel::ECC_Visibility, QueryParams))
+	{
+		auto FoundDistraction = Cast<ADistraction>(HitResult.GetActor());
+		if (FoundDistraction)
+		{
+			if (Distraction)
+			{
+				Distraction->RemoveOutlineEffect();
+			}
+
+			Distraction = FoundDistraction;
+			Distraction->EnableOutlineEffect();
+		}
+		else
+		{
+			if (Distraction)
+			{
+				Distraction->RemoveOutlineEffect();
+				Distraction = nullptr;
+			}
+		}
+	}
+}
+
+void AProjectCharacter::InteractWithDistractions()
+{
+	if (Distraction)
+	{
+		switch (Distraction->bIsDistracting)
+		{
+		case true:
+			Distraction->StopDistraction();
+			break;
+		case false:
+			Distraction->StartDistraction();
+			break;
+		}
+	}
+}
+
+void AProjectCharacter::LoadWinGameScreen()
+{
+	UGameplayStatics::OpenLevel(GetWorld(), FName{TEXT("GameWin")});
 }
 
 void AProjectCharacter::Tick(float DeltaTime)

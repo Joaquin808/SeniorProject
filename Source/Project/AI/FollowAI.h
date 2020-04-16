@@ -180,6 +180,17 @@ protected:
 	UPROPERTY(EditDefaultsOnly)
 	bool bGameCanEnd;
 
+	bool bIsDistracted;
+
+	FTimerHandle TimerHandle_DistractedTimer;
+
+	UPROPERTY(EditDefaultsOnly)
+	float DistractedTimerLength;
+
+	class ADistraction* Distraction;
+
+	TArray<class ADistraction*> PastDistractions;
+
 public:
 	// Sets default values for this character's properties
 	AFollowAI();
@@ -255,6 +266,12 @@ protected:
 	void KillPlayer();
 
 	void ShowGameOverScreen();
+
+	bool GetDistracted();
+
+	void StartDistractionTimer();
+
+	void StopDistractionTimer();
 
 	void LogMessage(FString Message);
 

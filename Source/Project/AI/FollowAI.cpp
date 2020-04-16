@@ -13,6 +13,7 @@
 #include "Components/AudioComponent.h"
 #include "Actors/Vent.h"
 #include "Sound/SoundCue.h"
+#include "Actors/Distraction.h"
 
 // Sets default values
 AFollowAI::AFollowAI()
@@ -93,6 +94,8 @@ void AFollowAI::BeginPlay()
 		FTimerHandle TimerHandle_RandomSound;
 		GetWorldTimerManager().SetTimer(TimerHandle_RandomSound, this, &AFollowAI::PlayRandomSound, RandomSoundTimer, true);
 	}
+
+	bIsDistracted = false;
 }
 
 void AFollowAI::Patrol()
@@ -144,14 +147,14 @@ void AFollowAI::PatrolTimerEnd()
 		if (FVector::Dist(GetActorLocation(), CurrentPatrolPointLocation) <= 100.0f)
 		{
 			Patrol();
-			if (bDebugMessages)
-				UE_LOG(LogTemp, Log, TEXT("Close enough to point to transition"));
+			//if (bDebugMessages)
+				//UE_LOG(LogTemp, Log, TEXT("Close enough to point to transition"));
 		}
 		else
 		{
 			StartPatrolTimer(0.5f);
-			if (bDebugMessages)
-				UE_LOG(LogTemp, Log, TEXT("Not close enough to point to transition"));
+			//if (bDebugMessages)
+				//UE_LOG(LogTemp, Log, TEXT("Not close enough to point to transition"));
 		}
 	}
 }
@@ -204,7 +207,7 @@ void AFollowAI::CheckNotMoving()
 
 void AFollowAI::CheckLocation()
 {
-	if (bKilledPlayer)
+	if (bKilledPlayer || bIsDistracted)
 		return;
 
 	if (bDebugMessages)
@@ -366,10 +369,100 @@ void AFollowAI::ShowGameOverScreen()
 	UGameplayStatics::OpenLevel(GetWorld(), FName{ TEXT("GameOver") });
 }
 
+bool AFollowAI::GetDistracted()
+{
+	if (bIsDistracted)
+		return false;
+
+	ADistraction* LocalDistraction = Distraction;
+	if (PlayerReference->ActiveDistractions.Num() > 1)
+	{
+		LogMessage("More than one active distractions active");
+		TArray<AActor*> Distractions = PlayerReference->ActiveDistractions;
+		float Distance = 0;
+		for (int32 i = 0; i < Distractions.Num(); i++)
+		{
+			if (Distance == 0)
+			{
+				Distance = FVector::Dist(GetActorLocation(), Distractions[i]->GetActorLocation());
+				LocalDistraction = Cast<ADistraction>(Distractions[i]);
+			}
+
+			if (FVector::Dist(GetActorLocation(), Distractions[i]->GetActorLocation()) < Distance)
+			{
+				Distance = FVector::Dist(GetActorLocation(), Distractions[i]->GetActorLocation());
+				LocalDistraction = Cast<ADistraction>(Distractions[i]);
+			}
+		}
+	}
+	else
+	{
+		LogMessage("Only one active distraction");
+	}
+
+	TArray<AActor*> OutDistractions;
+	UGameplayStatics::GetAllActorsOfClass(GetWorld(), ADistraction::StaticClass(), OutDistractions);
+	for (int32 i = 0; i < OutDistractions.Num(); i++)
+	{
+		if (LocalDistraction == OutDistractions[i])
+		{
+			LocalDistraction = Cast<ADistraction>(OutDistractions[i]);
+			LogMessage("Found distraction in game");
+		}
+	}
+
+	// don't want the AI to get distracted by the same thing over again
+	if (PastDistractions.Contains(LocalDistraction))
+	{
+		LogMessage("Already been distracted by this");
+		return false;
+	}
+
+	Distraction = LocalDistraction;
+	PastDistractions.Add(LocalDistraction);
+	// I want to change the stencil value of that distraction so the player knows that it's use is ran out
+	LocalDistraction->StencilValue = 2;
+	UAIBlueprintHelperLibrary::SimpleMoveToLocation(GetController(), LocalDistraction->GetActorLocation());
+	StartDistractionTimer();
+	return true;
+}
+
+void AFollowAI::StartDistractionTimer()
+{
+	bIsDistracted = true;
+	GetWorldTimerManager().SetTimer(TimerHandle_DistractedTimer, this, &AFollowAI::StopDistractionTimer, DistractedTimerLength);
+}
+
+void AFollowAI::StopDistractionTimer()
+{
+	Distraction->StopDistraction();
+	bIsDistracted = false;
+	GetWorldTimerManager().ClearTimer(TimerHandle_DistractedTimer);
+}
+
 void AFollowAI::OnHearPawn(APawn* OtherActor, const FVector& Location, float Volume)
 {
 	if (bDebugMessages)
 		UE_LOG(LogTemp, Log, TEXT("Heard something"));
+
+	// disable hearing temporarily while the AI is distracted
+	if (bIsDistracted)
+		return;
+
+	auto Distraction = Cast<ADistraction>(OtherActor);
+	if (Distraction)
+	{
+		this->Distraction = Distraction;
+		if (GetDistracted())
+		{
+			LogMessage("Distraction sound heard");
+			return;
+		}
+	}
+
+	// don't keep stopping the patrol and running the rest of the code just because the AI hears a distraction sound
+	if (PlayerReference != OtherActor)
+		return;
 
 	bIsPatroling = false;
 
