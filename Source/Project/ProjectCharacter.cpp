@@ -491,13 +491,12 @@ void AProjectCharacter::InteractWithPickups()
 				}
 			}
 
-			if (bGameEndWithCar)
+			if (bGameEndWithCar && Inventory.Contains("Car"))
 			{
-				Inventory.Contains("Car");
 				UE_LOG(LogTemp, Log, TEXT("Player has car key"));
 				StartCheckForCarTimer();
-				//if (FollowAI)
-					//FollowAI->EndGameChasePlayer();
+				if (FollowAI)
+					FollowAI->EndGameChasePlayer();
 			}
 		}
 	}
